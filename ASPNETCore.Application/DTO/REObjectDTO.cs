@@ -26,7 +26,7 @@ namespace ASPNETCore.Application.DTO
 
         public int Building { get; set; }
 
-        public int? Number { get; set; }
+        public int? Roomnum { get; set; }
 
         public int Price { get; set; }
         public int StatusId { get; set; }

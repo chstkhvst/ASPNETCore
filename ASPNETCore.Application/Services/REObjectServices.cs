@@ -23,7 +23,7 @@ namespace ASPNETCore.Application.Services
                 Rooms = o.Rooms,
                 Floors = o.Floors,
                 Building = o.Building,
-                Number = o.Number,
+                Roomnum = o.Roomnum,
                 Square = o.Square,
                 Street = o.Street,
                 DealTypeId = o.DealTypeId,
@@ -53,7 +53,7 @@ namespace ASPNETCore.Application.Services
                 Rooms = obj.Rooms,
                 Floors = obj.Floors,
                 Building = obj.Building,
-                Number = obj.Number,
+                Roomnum = obj.Roomnum,
                 Square = obj.Square,
                 Street = obj.Street,
                 DealTypeId = obj.DealTypeId,
@@ -73,7 +73,7 @@ namespace ASPNETCore.Application.Services
                 Rooms = o.Rooms,
                 Floors = o.Floors,
                 Building = o.Building,
-                Number = o.Number,
+                Roomnum = o.Roomnum,
                 Square = o.Square,
                 Street = o.Street,
                 DealTypeId = o.DealTypeId,
@@ -92,7 +92,7 @@ namespace ASPNETCore.Application.Services
                 Rooms = o.Rooms,
                 Floors = o.Floors,
                 Building = o.Building,
-                Number = o.Number,
+                Roomnum = o.Roomnum,
                 Square = o.Square,
                 Street = o.Street,
                 DealTypeId = o.DealTypeId,
@@ -112,7 +112,7 @@ namespace ASPNETCore.Application.Services
                 obj.Rooms = o.Rooms;
                 obj.Floors = o.Floors;
                 obj.Building = o.Building;
-                obj.Number = o.Number;
+                obj.Roomnum = o.Roomnum;
                 obj.Square = o.Square;
                 obj.Street = o.Street;
                 obj.DealTypeId = o.DealTypeId;

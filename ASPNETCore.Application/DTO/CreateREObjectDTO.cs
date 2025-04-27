@@ -32,7 +32,7 @@ namespace ASPNETCore.Application.DTO
         [Required]
         public int Building { get; set; }
         
-        public int? Number { get; set; }
+        public int? Roomnum { get; set; }
 
         [Required]
         public int Price { get; set; }

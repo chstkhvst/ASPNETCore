@@ -28,7 +28,7 @@ namespace ASPNETCore.Domain.Entities
 
         public int Building { get; set; } //номер здания
 
-        public int? Number { get; set; } //номер квартиры
+        public int? Roomnum { get; set; } //номер квартиры
 
         public int Price { get; set; } //стоимость
 

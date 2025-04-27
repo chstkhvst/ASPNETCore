@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -24,13 +25,24 @@ namespace ProjectManagement.Api.Controllers
             _signInManager = signInManager;
             _configuration = configuration;
         }
-
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("ModelState невалидна:");
+                foreach (var kvp in ModelState)
+                {
+                    foreach (var error in kvp.Value.Errors)
+                    {
+                        Console.WriteLine($"Поле: {kvp.Key}, Ошибка: {error.ErrorMessage}");
+                    }
+                }
+
+                return BadRequest(ModelState);
+            }
             //var user = new User { UserName = model.UserName, Email = model.Email };
-            var user = new User { UserName = model.UserName, FullName = model.FullName };
+            var user = new User { UserName = model.UserName, FullName = model.FullName, PhoneNumber = model.PhoneNumber };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
@@ -50,8 +62,16 @@ namespace ProjectManagement.Api.Controllers
             {
                 var user = await _userManager.FindByNameAsync(model.UserName);
                 var token = GenerateJwtToken(user);
-                return Ok(new { Token = token });
+                var roles = await _userManager.GetRolesAsync(user);
+
+                return Ok(new
+                {
+                    token = token,
+                    userName = user.UserName,
+                    userRole = roles.FirstOrDefault()
+                });
             }
+
             return Unauthorized();
         }
         [Authorize]
@@ -75,7 +95,83 @@ namespace ProjectManagement.Api.Controllers
             return Ok(new { message = "Сессия активна", userName = usr.UserName, userRole });
 
         }
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Пользователь не найден" });
+            }
 
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(new
+            {
+                id = user.Id,
+                userName = user.UserName,
+                fullName = user.FullName,
+                phoneNumber = user.PhoneNumber,
+                //userRole = roles.FirstOrDefault()
+            });
+        }
+
+        [Authorize]
+        [HttpPut("editprofile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Пользователь не найден" });
+            }
+
+            // Обновляем только разрешенные поля
+            user.FullName = model.FullName;
+            user.PhoneNumber = model.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return Ok(new
+                {
+                    message = "Профиль успешно обновлен",
+                    userName = user.UserName,
+                    fullName = user.FullName,
+                    phoneNumber = user.PhoneNumber
+                });
+            }
+
+            return BadRequest(result.Errors);
+        }
+
+        [HttpGet("all-users")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = new List<object>();
+            var allUsers = await _userManager.Users.AsNoTracking().ToListAsync();
+
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                users.Add(new
+                {
+                    user.Id,
+                    user.UserName,
+                    user.FullName,
+                    user.PhoneNumber,
+                    Roles = roles
+                });
+            }
+
+            return Ok(users);
+        }
         private string GenerateJwtToken(User user)
         {
             var claims = new List<Claim>

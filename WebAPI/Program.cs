@@ -21,6 +21,12 @@ builder.Services.AddIdentity<User, IdentityRole>()
 
 
 builder.Services.AddScoped<IREObjectRepository, REObjectRepository>();
+builder.Services.AddScoped<IContractRepository, ContractRepository>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+
+builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
+builder.Services.AddScoped<CatalogService>();
+
 // Регистрация репозитория объектов.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -58,6 +64,8 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<REObjectServices>();
+builder.Services.AddScoped<ContractServices>();
+builder.Services.AddScoped<ReservationServices>();
 // Регистрация сервиса объектов.
 
 builder.Services.AddControllers();

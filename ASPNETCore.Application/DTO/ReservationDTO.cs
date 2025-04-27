@@ -1,16 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ASPNETCore.Domain.Entities;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace ASPNETCore.Domain.Entities
+namespace ASPNETCore.Application.DTO
 {
-    public class Reservation
+    public class ReservationDTO
     {
-        //public Reservation()
-        //{
-        //    Contract = new HashSet<Contract>();
-        //}
-
-        [Key]
         public int Id { get; set; }
 
         public int ObjectId { get; set; }
@@ -25,7 +24,7 @@ namespace ASPNETCore.Domain.Entities
 
         public int ResStatusId { get; set; }
 
-        //[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        
         //public virtual ICollection<Contract> Contract { get; set; }
 
         public virtual REObject Object { get; set; }
@@ -35,4 +34,3 @@ namespace ASPNETCore.Domain.Entities
         public virtual User User { get; set; }
     }
 }
-

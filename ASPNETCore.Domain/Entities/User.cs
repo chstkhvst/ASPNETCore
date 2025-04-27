@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ASPNETCore.Domain.Entities
 {
@@ -15,7 +16,14 @@ namespace ASPNETCore.Domain.Entities
         [StringLength(10)]
         public string? Passport { get; set; }
 
-        [StringLength(11)]
-        public string? Phone { get; set; }
+        //[StringLength(11)]
+        //public string? Phone { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        [JsonIgnore]
+        public virtual ICollection<Contract> Contract { get; set; }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        [JsonIgnore]
+        public virtual ICollection<Reservation> Reservation { get; set; }
     }
 }

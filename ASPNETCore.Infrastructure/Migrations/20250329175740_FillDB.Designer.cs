@@ -4,6 +4,7 @@ using ASPNETCore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ASPNETCore.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250329175740_FillDB")]
+    partial class FillDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,6 +36,9 @@ namespace ASPNETCore.Infrastructure.Migrations
                     b.Property<int>("ReservationId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ReservationId1")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("SignDate")
                         .HasColumnType("date");
 
@@ -46,6 +52,8 @@ namespace ASPNETCore.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ReservationId");
+
+                    b.HasIndex("ReservationId1");
 
                     b.HasIndex("UserId");
 
@@ -153,12 +161,11 @@ namespace ASPNETCore.Infrastructure.Migrations
                     b.Property<string>("StatusType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("ResStatuses");
+                    b.ToTable("ResStatus");
                 });
 
             modelBuilder.Entity("ASPNETCore.Domain.Entities.Reservation", b =>
@@ -279,7 +286,11 @@ namespace ASPNETCore.Infrastructure.Migrations
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int?>("UserRoleId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -291,7 +302,28 @@ namespace ASPNETCore.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
+                    b.HasIndex("UserRoleId");
+
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("ASPNETCore.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserRole");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -435,10 +467,14 @@ namespace ASPNETCore.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ASPNETCore.Domain.Entities.Reservation", null)
+                        .WithMany("Contract")
+                        .HasForeignKey("ReservationId1");
+
                     b.HasOne("ASPNETCore.Domain.Entities.User", "User")
                         .WithMany("Contract")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Reservation");
@@ -498,6 +534,13 @@ namespace ASPNETCore.Infrastructure.Migrations
                     b.Navigation("ResStatus");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ASPNETCore.Domain.Entities.User", b =>
+                {
+                    b.HasOne("ASPNETCore.Domain.Entities.UserRole", null)
+                        .WithMany("User")
+                        .HasForeignKey("UserRoleId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -566,6 +609,11 @@ namespace ASPNETCore.Infrastructure.Migrations
                     b.Navigation("Reservation");
                 });
 
+            modelBuilder.Entity("ASPNETCore.Domain.Entities.Reservation", b =>
+                {
+                    b.Navigation("Contract");
+                });
+
             modelBuilder.Entity("ASPNETCore.Domain.Entities.Status", b =>
                 {
                     b.Navigation("Object");
@@ -576,6 +624,11 @@ namespace ASPNETCore.Infrastructure.Migrations
                     b.Navigation("Contract");
 
                     b.Navigation("Reservation");
+                });
+
+            modelBuilder.Entity("ASPNETCore.Domain.Entities.UserRole", b =>
+                {
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
