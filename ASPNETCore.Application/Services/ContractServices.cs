@@ -70,14 +70,25 @@ namespace ASPNETCore.Application.Services
         }
 
         // Добавление нового контракта
+        //public async Task AddAsync(CreateContractDTO contractDto)
+        //{
+        //    var contract = new Contract
+        //    {
+        //        SignDate = contractDto.SignDate,
+        //        ReservationId = contractDto.ReservationId,
+        //        UserId = contractDto.UserId,
+        //        Total = contractDto.Total
+        //    };
+        //    await _contractRepository.AddAsync(contract);
+        //}
+
         public async Task AddAsync(CreateContractDTO contractDto)
         {
             var contract = new Contract
             {
-                SignDate = contractDto.SignDate,
                 ReservationId = contractDto.ReservationId,
-                UserId = contractDto.UserId,
-                Total = contractDto.Total
+                UserId = contractDto.UserId
+                // SignDate и Total будут установлены в репозитории
             };
             await _contractRepository.AddAsync(contract);
         }

@@ -73,12 +73,30 @@ namespace ASPNETCore.Infrastructure.Repositories
         }
 
         // Добавить новый контракт
+        //public async Task AddAsync(Contract contract)
+        //{
+        //    _context.Contracts.Add(contract);
+        //    int changes = await _context.SaveChangesAsync();
+        //    Console.WriteLine($"Добавлено {changes} контрактов в БД.");
+        //}
         public async Task AddAsync(Contract contract)
         {
+            var reservation = await _context.Reservations
+                .Include(r => r.Object)
+                .FirstOrDefaultAsync(r => r.Id == contract.ReservationId);
+
+            if (reservation == null)
+                throw new ArgumentException($"Reservation с ID {contract.ReservationId} не найдена.");
+            if (reservation.ResStatusId != 1)
+                throw new ArgumentException($"Договор по брони уже заключен");
+            contract.SignDate = DateTime.UtcNow;
+            contract.Total = reservation.Object.Price + 20000;
+            reservation.ResStatusId = 2;
+
             _context.Contracts.Add(contract);
-            int changes = await _context.SaveChangesAsync();
-            Console.WriteLine($"Добавлено {changes} контрактов в БД.");
+            await _context.SaveChangesAsync();
         }
+
 
         // Обновить контракт
         public async Task UpdateAsync(Contract contract)

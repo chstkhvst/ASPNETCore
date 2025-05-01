@@ -95,27 +95,77 @@ namespace ProjectManagement.Api.Controllers
             return Ok(new { message = "Сессия активна", userName = usr.UserName, userRole });
 
         }
+        //[Authorize]
+        //[HttpGet("profile")]
+        //public async Task<IActionResult> GetCurrentUser()
+        //{
+        //    var user = await _userManager.GetUserAsync(HttpContext.User);
+        //    if (user == null)
+        //    {
+        //        return Unauthorized(new { message = "Пользователь не найден" });
+        //    }
+
+        //    var roles = await _userManager.GetRolesAsync(user);
+
+        //    return Ok(new
+        //    {
+        //        id = user.Id,
+        //        userName = user.UserName,
+        //        fullName = user.FullName,
+        //        phoneNumber = user.PhoneNumber,
+        //        //userRole = roles.FirstOrDefault()
+        //    });
+        //}
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> GetCurrentUser()
         {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
+            var user = await _userManager.Users
+                .Include(u => u.Reservation)
+                    .ThenInclude(r => r.Object)   // Загрузка связанных объектов
+                .Include(u => u.Reservation)
+                    .ThenInclude(r => r.ResStatus) // Загрузка статусов
+                .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
+
             if (user == null)
             {
                 return Unauthorized(new { message = "Пользователь не найден" });
             }
 
             var roles = await _userManager.GetRolesAsync(user);
-
-            return Ok(new
+            var userProfile = new Dictionary<string, object>
             {
-                id = user.Id,
-                userName = user.UserName,
-                fullName = user.FullName,
-                phoneNumber = user.PhoneNumber,
-                //userRole = roles.FirstOrDefault()
-            });
+                { "id", user.Id },
+                { "userName", user.UserName },
+                { "fullName", user.FullName },
+                { "phoneNumber", user.PhoneNumber },
+                { "reservations", user.Reservation?.Select(r => new Dictionary<string, object>
+                    {
+                        { "id", r.Id },
+                        { "startDate", r.StartDate },
+                        { "endDate", r.EndDate },
+                        { "userId", r.UserId },
+                        { "objectId", r.ObjectId },
+                        { "resStatusId", r.ResStatusId },
+                        { "object", r.Object != null ? new Dictionary<string, object>
+                            {
+                                { "id", r.Object.Id },
+                                { "street", r.Object.Street },
+                                { "building", r.Object.Building },
+                                { "roomnum", r.Object.Roomnum }
+                            } : null },
+                        { "resStatus", r.ResStatus != null ? new Dictionary<string, object>
+                            {
+                                { "id", r.ResStatus.Id },
+                                { "statusType", r.ResStatus.StatusType }
+                            } : null }
+                    }) },
+                { "userRole", roles.FirstOrDefault() }
+             };
+
+            return Ok(userProfile);
         }
+
 
         [Authorize]
         [HttpPut("editprofile")]

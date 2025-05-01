@@ -47,7 +47,9 @@ namespace WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ReservationDTO>> UpdateReservation(int id, CreateReservationDTO reservationDto)
         {
+            Console.WriteLine("Зашли в функцию");
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            Console.WriteLine("Зашли в проверку");
             if (id != reservationDto.Id) return BadRequest();
             await _reservationService.UpdateAsync(reservationDto);
             return CreatedAtAction(nameof(GetReservation), new { id = reservationDto.Id }, reservationDto);

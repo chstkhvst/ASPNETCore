@@ -39,7 +39,7 @@ namespace WebAPI.Controllers
             return Ok(contract);
         }
 
-        // Создание нового контракта
+        //// Создание нового контракта
         [HttpPost]
         public async Task<ActionResult<ContractDTO>> CreateContract(CreateContractDTO contractDto)
         {

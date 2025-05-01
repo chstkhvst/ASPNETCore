@@ -33,6 +33,7 @@ namespace ASPNETCore.Domain.Entities
         public int Price { get; set; } //стоимость
 
         public int StatusId { get; set; } // статус
+        public string? ImagePath { get; set; }
 
         public virtual DealType DealType { get; set; }
 
