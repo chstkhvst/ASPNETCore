@@ -51,6 +51,8 @@ namespace ASPNETCore.Infrastructure.Repositories
         // Добавить новую бронь
         public async Task AddAsync(Reservation reservation)
         {
+            if (reservation.Object.StatusId == 1)
+                throw new ArgumentException("Объект невозможно забронировать");
             _context.Reservations.Add(reservation);
             int changes = await _context.SaveChangesAsync();
             Console.WriteLine($"Добавлено {changes} брони в БД.");
@@ -61,7 +63,7 @@ namespace ASPNETCore.Infrastructure.Repositories
         {
             var existingReservation = await _context.Reservations.FindAsync(reservation.Id);
             if (existingReservation == null)
-                throw new KeyNotFoundException($"Reservation с ID {reservation.Id} не найден.");
+                throw new KeyNotFoundException($"Бронь с ID {reservation.Id} не найдена.");
 
             _context.Entry(existingReservation).CurrentValues.SetValues(reservation);
             await _context.SaveChangesAsync();

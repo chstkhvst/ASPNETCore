@@ -90,7 +90,8 @@ namespace ASPNETCore.Infrastructure.Repositories
             if (reservation.ResStatusId != 1)
                 throw new ArgumentException($"Договор по брони уже заключен");
             contract.SignDate = DateTime.UtcNow;
-            contract.Total = reservation.Object.Price + 20000;
+            int addPrice = reservation.Object.Price/10;
+            contract.Total = reservation.Object.Price + addPrice;
             reservation.ResStatusId = 2;
 
             _context.Contracts.Add(contract);

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+
 
 namespace ASPNETCore.Domain.Entities
 {
@@ -40,6 +42,10 @@ namespace ASPNETCore.Domain.Entities
         public virtual Status Status { get; set; }
 
         public virtual ObjectType ObjectType { get; set; }
+
+
+        [JsonIgnore]
+        public virtual ICollection<ObjectImages> ObjectImages { get; set; }
         //public virtual ICollection<Reservation> Reservation { get; set; }
     }
 }

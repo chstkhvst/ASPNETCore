@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -39,5 +40,7 @@ namespace ASPNETCore.Application.DTO
 
         [Required]
         public int StatusId { get; set; }
+        public IFormFileCollection? Files { get; set; }
+        public virtual ICollection<ObjectImagesDTO> ObjectImages { get; set; }
     }
 }

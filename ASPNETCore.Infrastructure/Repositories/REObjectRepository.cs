@@ -42,7 +42,8 @@ namespace ASPNETCore.Infrastructure.Repositories
             return await _context.Objects
                 .Include(o => o.ObjectType) 
                 .Include(o => o.Status)     
-                .Include(o => o.DealType)   
+                .Include(o => o.DealType)
+                .Include(o=>o.ObjectImages)
                 .AsNoTracking() 
                 .ToListAsync();
         }

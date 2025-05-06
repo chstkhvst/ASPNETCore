@@ -86,8 +86,8 @@ namespace ASPNETCore.Infrastructure.Data
         public virtual DbSet<Status> Statuses { get; set; }
         public virtual DbSet<Contract> Contracts { get; set; }
         public virtual DbSet<Reservation> Reservations { get; set; }
-        public virtual DbSet<ResStatus> ResStatuses { get; set; } 
-
+        public virtual DbSet<ResStatus> ResStatuses { get; set; }
+        public virtual DbSet<ObjectImages> ObjectImages { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -134,21 +134,6 @@ namespace ASPNETCore.Infrastructure.Data
                 .Property(e => e.Passport)
                 .IsUnicode(false);
 
-            //modelBuilder.Entity<User>()
-            //    .Property(e => e.Phone)
-            //    .IsUnicode(false);
-
-            //modelBuilder.Entity<User>()
-            //    .Property(e => e.UserName)
-            //    .IsUnicode(false);
-
-            //// Конфигурация Reservation
-            //modelBuilder.Entity<Reservation>()
-            //    .HasOne(r => r.ResStatus)
-            //    .WithMany()
-            //    .HasForeignKey(r => r.ResStatusId)
-            //    .OnDelete(DeleteBehavior.Restrict);
-
             // Конфигурация ResStatus
             modelBuilder.Entity<ResStatus>()
                 .Property(rs => rs.StatusType)
@@ -168,7 +153,16 @@ namespace ASPNETCore.Infrastructure.Data
                 .HasOne(c => c.Reservation)
                 .WithMany()
                 .HasForeignKey(c => c.ReservationId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ObjectImages>(entity =>
+            {
+                entity.Property(e => e.ImagePath)
+                    .IsUnicode(false)
+                    .IsRequired();
+                entity.HasOne(oi => oi.Object)
+                    .WithMany(o => o.ObjectImages);
+            });
         }
     }
 }

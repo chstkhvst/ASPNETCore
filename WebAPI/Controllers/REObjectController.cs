@@ -4,6 +4,7 @@ using ASPNETCore.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
@@ -13,18 +14,19 @@ namespace WebAPI.Controllers
     public class REObjectController : ControllerBase
     {
         private readonly REObjectServices _reObjectService;
-
-        public REObjectController(REObjectServices reObjectService)
+        private readonly IWebHostEnvironment _env;
+        public REObjectController(REObjectServices reObjectService, IWebHostEnvironment env)
         {
             _reObjectService = reObjectService;
+            _env = env;
         }
-
-        //получение всех объектов или поиск по названию
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<REObjectDTO>>> GetREObjects([FromQuery] string? name)
         {
-            var objects = string.IsNullOrEmpty(name) //если строка не пустая, то ищем по имени, иначе выводим весь список объектов
-                ? await _reObjectService.GetAllAsync()
+            var isAdmin = User.IsInRole("admin");
+            var objects = string.IsNullOrEmpty(name)
+                ? await _reObjectService.GetAllAsync(isAdmin)
                 : await _reObjectService.SearchByNameAsync(name);
 
             return Ok(objects);
@@ -40,23 +42,57 @@ namespace WebAPI.Controllers
         }
 
         //создание нового объекта
+        //[HttpPost]
+        //public async Task<ActionResult<REObjectDTO>> CreateREObject(CreateREObjectDTO reObjectDto)
+        //{
+        //    await _reObjectService.AddAsync(reObjectDto);
+        //    return CreatedAtAction(nameof(GetREObject), new { id = reObjectDto.Id }, reObjectDto);
+        //}
         [HttpPost]
-        public async Task<ActionResult<REObjectDTO>> CreateREObject(CreateREObjectDTO reObjectDto)
-        {
-            await _reObjectService.AddAsync(reObjectDto);
-            return CreatedAtAction(nameof(GetREObject), new { id = reObjectDto.Id }, reObjectDto);
+        public async Task<ActionResult<REObjectDTO>> CreateREObject(
+            [FromForm] string street,
+            [FromForm] int building,
+            [FromForm] int? roomnum,
+            [FromForm] int rooms,
+            [FromForm] int floors,
+            [FromForm] int square,
+            [FromForm] int price,
+            [FromForm] int dealTypeId,
+            [FromForm] int typeId,
+            [FromForm] int statusId,
+            [FromForm] IFormFileCollection files)
+         {
+                try
+                {
+                    var reObjectDto = new CreateREObjectDTO
+                    {
+                        Street = street,
+                        Building = building,
+                        Roomnum = roomnum,
+                        Rooms = rooms,
+                        Floors = floors,
+                        Square = square,
+                        Price = price,
+                        DealTypeId = dealTypeId,
+                        TypeId = typeId,
+                        StatusId = statusId
+                    };
+
+                    await _reObjectService.AddAsync(reObjectDto, files, _env);
+                    return CreatedAtAction(nameof(GetREObject), new { id = reObjectDto.Id }, reObjectDto);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Ошибка при создании объекта",
+                        Details = ex.Message,
+                        StackTrace = ex.StackTrace
+                    });
+                }
         }
 
-        ////обновление объекта по ID
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateREObject(int id, CreateREObjectDTO reObjectDto)
-        //{
-        //    if (id != reObjectDto.Id) return BadRequest();
-        //    await _reObjectService.UpdateAsync(reObjectDto);
-        //    return NoContent();
-        //}
         [HttpPut("{id}")]
-        // Указывает, что данный метод обрабатывает HTTP PUT-запросы для обновления.
         public async Task<ActionResult<REObjectDTO>> UpdateProject(int id, CreateREObjectDTO reobjectDto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -64,7 +100,6 @@ namespace WebAPI.Controllers
             await _reObjectService.UpdateAsync(reobjectDto);
             return CreatedAtAction(nameof(GetREObject), new { id = reobjectDto.Id }, reobjectDto);
         }
-
         //удаление объекта по ID
         //[Authorize(Roles = "admin")]
         [HttpDelete("{id}")]

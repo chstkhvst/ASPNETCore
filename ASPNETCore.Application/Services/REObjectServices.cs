@@ -1,6 +1,8 @@
 ﻿using ASPNETCore.Application.DTO;
 using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace ASPNETCore.Application.Services
 {
@@ -14,9 +16,13 @@ namespace ASPNETCore.Application.Services
         }
 
         //Получение всех объектов недвижимости
-        public async Task<IEnumerable<REObjectDTO>> GetAllAsync()
+        public async Task<IEnumerable<REObjectDTO>> GetAllAsync(bool isAdmin = false)
         {
             var objects = await _reObjectRepository.GetAllAsync();
+            if (!isAdmin)
+            {
+                objects = objects.Where(o => o.StatusId == 1).ToList();
+            }
             return objects.Select(o => new REObjectDTO
             {
                 Id = o.Id,
@@ -32,11 +38,15 @@ namespace ASPNETCore.Application.Services
                 StatusId = o.StatusId,
                 Status = new Status { Id = o.Status.Id, StatusName = o.Status.StatusName },
                 ObjectType = new ObjectType { Id = o.TypeId, TypeName = o.ObjectType.TypeName },
-                DealType = new DealType { Id = o.TypeId, DealName = o.DealType.DealName }
+                DealType = new DealType { Id = o.TypeId, DealName = o.DealType.DealName },
+                ObjectImages = o.ObjectImages?.Select(i => new ObjectImagesDTO
+                {
+                    Id = i.Id,
+                    ImagePath = i.ImagePath,
+                    ObjectId = i.ObjectId
+                }).ToList() ?? new List<ObjectImagesDTO>()
             });
         }
-
-
         // Получение объекта по ID
         public async Task<REObjectDTO> GetByIdAsync(int id)
         {
@@ -84,7 +94,47 @@ namespace ASPNETCore.Application.Services
         }
 
         // Добавление нового объекта
-        public async Task AddAsync(CreateREObjectDTO o)
+        //public async Task AddAsync(CreateREObjectDTO o)
+        //{
+        //    var obj = new REObject
+        //    {
+        //        Id = o.Id,
+        //        Rooms = o.Rooms,
+        //        Floors = o.Floors,
+        //        Building = o.Building,
+        //        Roomnum = o.Roomnum,
+        //        Square = o.Square,
+        //        Street = o.Street,
+        //        DealTypeId = o.DealTypeId,
+        //        Price = o.Price,
+        //        TypeId = o.TypeId,
+        //        StatusId = o.StatusId,
+        //        ObjectImages = o.ObjectImages?.Select(img => new ObjectImages
+        //        {
+        //            ImagePath = img.ImagePath,
+        //            ObjectId = o.Id
+        //        }).ToList()
+        //    };
+
+        //    await _reObjectRepository.AddAsync(obj);
+        //}
+        private async Task<string> SaveImage(IFormFile file, IWebHostEnvironment env)
+        {
+            var uploadsFolder = Path.Combine(env.WebRootPath, "assets");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"/assets/{uniqueFileName}";
+        }
+        public async Task AddAsync(CreateREObjectDTO o, IFormFileCollection? files = null, IWebHostEnvironment? env = null)
         {
             var obj = new REObject
             {
@@ -98,8 +148,28 @@ namespace ASPNETCore.Application.Services
                 DealTypeId = o.DealTypeId,
                 Price = o.Price,
                 TypeId = o.TypeId,
-                StatusId = o.StatusId
+                StatusId = o.StatusId,
+                ObjectImages = o.ObjectImages?.Select(img => new ObjectImages
+                {
+                    ImagePath = img.ImagePath,
+                    ObjectId = o.Id
+                }).ToList() ?? new List<ObjectImages>()
             };
+
+            // Добавляем файлы, если они есть
+            if (files != null && env != null)
+            {
+                foreach (var file in files)
+                {
+                    var imagePath = await SaveImage(file, env);
+                    obj.ObjectImages.Add(new ObjectImages
+                    {
+                        ImagePath = imagePath,
+                        ObjectId = o.Id
+                    });
+                }
+            }
+
             await _reObjectRepository.AddAsync(obj);
         }
 

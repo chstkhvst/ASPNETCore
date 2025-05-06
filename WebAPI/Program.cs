@@ -4,6 +4,7 @@ using ASPNETCore.Domain.Interfaces;
 using ASPNETCore.Infrastructure.Data;
 using ASPNETCore.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -23,7 +24,7 @@ builder.Services.AddIdentity<User, IdentityRole>()
 builder.Services.AddScoped<IREObjectRepository, REObjectRepository>();
 builder.Services.AddScoped<IContractRepository, ContractRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
-
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddScoped<CatalogService>();
 
@@ -62,6 +63,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("admin"));
     options.AddPolicy("RequireRoleUser", policy => policy.RequireRole("User"));
 });
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue; // Для больших файлов
+});
 
 builder.Services.AddScoped<REObjectServices>();
 builder.Services.AddScoped<ContractServices>();
@@ -84,6 +89,15 @@ builder.Services.AddSwaggerGen();
 //                  .AllowAnyMethod();
 //        });
 //});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
