@@ -161,7 +161,8 @@ namespace ASPNETCore.Infrastructure.Data
                     .IsUnicode(false)
                     .IsRequired();
                 entity.HasOne(oi => oi.Object)
-                    .WithMany(o => o.ObjectImages);
+                    .WithMany(o => o.ObjectImages)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

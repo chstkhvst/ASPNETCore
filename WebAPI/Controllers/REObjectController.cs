@@ -85,20 +85,65 @@ namespace WebAPI.Controllers
                 {
                     return BadRequest(new
                     {
-                        Message = "Ошибка при создании объекта",
+                        Message = ex.Message,
                         Details = ex.Message,
                         StackTrace = ex.StackTrace
                     });
                 }
         }
 
+        //[HttpPut("{id}")]
+        //public async Task<ActionResult<REObjectDTO>> UpdateProject(int id, CreateREObjectDTO reobjectDto)
+        //{
+        //    if (!ModelState.IsValid) return BadRequest(ModelState);
+        //    if (id != reobjectDto.Id) return BadRequest();
+        //    await _reObjectService.UpdateAsync(reobjectDto);
+        //    return CreatedAtAction(nameof(GetREObject), new { id = reobjectDto.Id }, reobjectDto);
+        //}
         [HttpPut("{id}")]
-        public async Task<ActionResult<REObjectDTO>> UpdateProject(int id, CreateREObjectDTO reobjectDto)
+        public async Task<ActionResult<REObjectDTO>> UpdateProject(
+    int id,
+    [FromForm] string street,
+    [FromForm] int building,
+    [FromForm] int? roomnum,
+    [FromForm] int rooms,
+    [FromForm] int floors,
+    [FromForm] int square,
+    [FromForm] int price,
+    [FromForm] int dealTypeId,
+    [FromForm] int typeId,
+    [FromForm] int statusId,
+    [FromForm] IFormFileCollection? files, [FromForm] List<int>? imagesToDelete = null)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            if (id != reobjectDto.Id) return BadRequest();
-            await _reObjectService.UpdateAsync(reobjectDto);
-            return CreatedAtAction(nameof(GetREObject), new { id = reobjectDto.Id }, reobjectDto);
+            try
+            {
+                var reobjectDto = new CreateREObjectDTO
+                {
+                    Id = id,
+                    Street = street,
+                    Building = building,
+                    Roomnum = roomnum,
+                    Rooms = rooms,
+                    Floors = floors,
+                    Square = square,
+                    Price = price,
+                    DealTypeId = dealTypeId,
+                    TypeId = typeId,
+                    StatusId = statusId
+                };
+
+                await _reObjectService.UpdateAsync(reobjectDto, files, _env, imagesToDelete);
+                return CreatedAtAction(nameof(GetREObject), new { id = reobjectDto.Id }, reobjectDto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = "Ошибка при обновлении объекта",
+                    Details = ex.Message,
+                    StackTrace = ex.StackTrace
+                });
+            }
         }
         //удаление объекта по ID
         //[Authorize(Roles = "admin")]

@@ -26,6 +26,8 @@ namespace ASPNETCore.Infrastructure.Repositories
             return await _context.Objects
                 //.Include(o => o.ObjectType)
                 //.Include(o => o.Status)
+                .Include(o => o.ObjectImages)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -68,23 +70,43 @@ namespace ASPNETCore.Infrastructure.Repositories
         }
 
         // Обновить объект недвижимости
+        //public async Task UpdateAsync(REObject reObject)
+        //{
+        //    var existingObject = await _context.Objects.FindAsync(reObject.Id);
+        //    if (existingObject == null)
+        //        throw new KeyNotFoundException($"REObject с ID {reObject.Id} не найден.");
+
+        //    _context.Entry(existingObject).CurrentValues.SetValues(reObject);
+        //    await _context.SaveChangesAsync();
+        //}
         public async Task UpdateAsync(REObject reObject)
         {
-            var existingObject = await _context.Objects.FindAsync(reObject.Id);
+            var existingObject = await _context.Objects
+                .Include(o => o.ObjectImages) //  включаем связанные изображения
+                .FirstOrDefaultAsync(o => o.Id == reObject.Id);
+
             if (existingObject == null)
                 throw new KeyNotFoundException($"REObject с ID {reObject.Id} не найден.");
 
+            // Обновляем скалярные свойства
             _context.Entry(existingObject).CurrentValues.SetValues(reObject);
             await _context.SaveChangesAsync();
         }
-
         // Удалить объект недвижимости
         public async Task DeleteAsync(int id)
         {
-            var obj = await _context.Objects.FindAsync(id);
+            var obj = await _context.Objects
+                .Include(o => o.ObjectImages) // Включаем связанные изображения
+                .FirstOrDefaultAsync(o => o.Id == id);
+
             if (obj != null)
             {
+                // Удаляем все связанные изображения
+                _context.ObjectImages.RemoveRange(obj.ObjectImages);
+
+                // Удаляем сам объект
                 _context.Objects.Remove(obj);
+
                 await _context.SaveChangesAsync();
             }
         }

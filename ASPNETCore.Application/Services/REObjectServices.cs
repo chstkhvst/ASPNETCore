@@ -9,10 +9,12 @@ namespace ASPNETCore.Application.Services
     public class REObjectServices
     {
         private readonly IREObjectRepository _reObjectRepository;
+        private readonly IImageRepository _imageRepository;
 
-        public REObjectServices(IREObjectRepository reObjectRepository)
+        public REObjectServices(IREObjectRepository reObjectRepository, IImageRepository imageRepository)
         {
             _reObjectRepository = reObjectRepository;
+            _imageRepository = imageRepository;
         }
 
         //Получение всех объектов недвижимости
@@ -157,12 +159,66 @@ namespace ASPNETCore.Application.Services
             };
 
             // Добавляем файлы, если они есть
+            await _reObjectRepository.AddAsync(obj);
+            var savedId = obj.Id;
+
             if (files != null && env != null)
             {
                 foreach (var file in files)
                 {
                     var imagePath = await SaveImage(file, env);
-                    obj.ObjectImages.Add(new ObjectImages
+                    await _imageRepository.AddAsync(new ObjectImages
+                    {
+                        ImagePath = imagePath,
+                        ObjectId = savedId // Используем подтвержденный ID
+                    });
+                }
+            }
+        }
+        public async Task UpdateAsync(
+    CreateREObjectDTO o,
+    IFormFileCollection? files = null,
+    IWebHostEnvironment? env = null,
+    IEnumerable<int>? imagesToDelete = null)
+        {
+            var obj = await _reObjectRepository.GetByIdAsync(o.Id);
+            if (obj == null)
+                return;
+
+            // Обновляем основные свойства
+            obj.Rooms = o.Rooms;
+            obj.Floors = o.Floors;
+            obj.Building = o.Building;
+            obj.Roomnum = o.Roomnum;
+            obj.Square = o.Square;
+            obj.Street = o.Street;
+            obj.DealTypeId = o.DealTypeId;
+            obj.Price = o.Price;
+            obj.TypeId = o.TypeId;
+            obj.StatusId = o.StatusId;
+
+            //// Удаляем изображения, помеченные для удаления
+            if (imagesToDelete != null && imagesToDelete.Any())
+            {
+                //var imagesForRemoval = obj.ObjectImages
+                //    .Where(img => imagesToDelete.Contains(img.Id))
+                //    .ToList();
+
+                //foreach (var img in imagesForRemoval)
+                //{
+                //    obj.ObjectImages.Remove(img);
+                //}
+                foreach (int id in imagesToDelete)
+                    await _imageRepository.DeleteAsync(id);
+            }
+
+            // Добавляем новые файлы
+            if (files != null && files.Count > 0 && env != null)
+            {
+                foreach (var file in files)
+                {
+                    var imagePath = await SaveImage(file, env);
+                    await _imageRepository.AddAsync(new ObjectImages
                     {
                         ImagePath = imagePath,
                         ObjectId = o.Id
@@ -170,28 +226,7 @@ namespace ASPNETCore.Application.Services
                 }
             }
 
-            await _reObjectRepository.AddAsync(obj);
-        }
-
-        // Обновление объекта
-        public async Task UpdateAsync(CreateREObjectDTO o)
-        {
-            var obj = await _reObjectRepository.GetByIdAsync(o.Id);
-            if (obj != null)
-            {
-                obj.Rooms = o.Rooms;
-                obj.Floors = o.Floors;
-                obj.Building = o.Building;
-                obj.Roomnum = o.Roomnum;
-                obj.Square = o.Square;
-                obj.Street = o.Street;
-                obj.DealTypeId = o.DealTypeId;
-                obj.Price = o.Price;
-                obj.TypeId = o.TypeId;
-                obj.StatusId = o.StatusId;
-
-                await _reObjectRepository.UpdateAsync(obj);
-            }
+            await _reObjectRepository.UpdateAsync(obj);
         }
 
         // Удаление объекта
