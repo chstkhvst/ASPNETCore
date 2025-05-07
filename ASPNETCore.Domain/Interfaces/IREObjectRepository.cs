@@ -38,5 +38,10 @@ namespace ASPNETCore.Domain.Interfaces
         /// Удаляет объект недвижимости по ID.
         /// </summary>
         Task DeleteAsync(int id);
+
+        Task<IEnumerable<REObject>> GetFilteredAsync(
+            int? typeId,
+            int? dealTypeId,
+            int? statusId);
     }
 }

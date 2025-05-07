@@ -163,5 +163,17 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpGet("filter")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<REObjectDTO>>> GetFilteredObjects(
+            [FromQuery] int? typeId,
+            [FromQuery] int? dealTypeId,
+            [FromQuery] int? statusId)
+        {
+            var isAdmin = User.IsInRole("admin");
+            var filteredObjects = await _reObjectService.GetFilteredAsync(typeId, dealTypeId, statusId, isAdmin);
+            return Ok(filteredObjects);
+        }
+
     }
 }

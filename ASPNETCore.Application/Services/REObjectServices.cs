@@ -20,11 +20,12 @@ namespace ASPNETCore.Application.Services
         //Получение всех объектов недвижимости
         public async Task<IEnumerable<REObjectDTO>> GetAllAsync(bool isAdmin = false)
         {
-            var objects = await _reObjectRepository.GetAllAsync();
-            if (!isAdmin)
-            {
-                objects = objects.Where(o => o.StatusId == 1).ToList();
-            }
+            // Для не-админов сразу запрашиваем только активные объекты (statusId = 1)
+            // Для админов получаем все объекты без фильтрации по статусу
+            var objects = isAdmin
+                ? await _reObjectRepository.GetAllAsync()
+                : await _reObjectRepository.GetFilteredAsync(null, null, 1);
+
             return objects.Select(o => new REObjectDTO
             {
                 Id = o.Id,
@@ -38,9 +39,9 @@ namespace ASPNETCore.Application.Services
                 Price = o.Price,
                 TypeId = o.TypeId,
                 StatusId = o.StatusId,
-                Status = new Status { Id = o.Status.Id, StatusName = o.Status.StatusName },
-                ObjectType = new ObjectType { Id = o.TypeId, TypeName = o.ObjectType.TypeName },
-                DealType = new DealType { Id = o.TypeId, DealName = o.DealType.DealName },
+                Status = o.Status != null ? new Status { Id = o.Status.Id, StatusName = o.Status.StatusName } : null,
+                ObjectType = o.ObjectType != null ? new ObjectType { Id = o.ObjectType.Id, TypeName = o.ObjectType.TypeName } : null,
+                DealType = o.DealType != null ? new DealType { Id = o.DealType.Id, DealName = o.DealType.DealName } : null,
                 ObjectImages = o.ObjectImages?.Select(i => new ObjectImagesDTO
                 {
                     Id = i.Id,
@@ -71,7 +72,17 @@ namespace ASPNETCore.Application.Services
                 DealTypeId = obj.DealTypeId,
                 Price = obj.Price,
                 TypeId = obj.TypeId,
-                StatusId = obj.StatusId
+                StatusId = obj.StatusId,
+                Status = obj.Status != null ? new Status { Id = obj.Status.Id, StatusName = obj.Status.StatusName } : null,
+                ObjectType = obj.ObjectType != null ? new ObjectType { Id = obj.ObjectType.Id, TypeName = obj.ObjectType.TypeName } : null,
+                DealType = obj.DealType != null ? new DealType { Id = obj.DealType.Id, DealName = obj.DealType.DealName } : null,
+                ObjectImages = obj.ObjectImages?.Select(i => new ObjectImagesDTO
+                {
+                    Id = i.Id,
+                    ImagePath = i.ImagePath,
+                    ObjectId = i.ObjectId
+                }).ToList() ?? new List<ObjectImagesDTO>()
+
             };
         }
 
@@ -176,10 +187,10 @@ namespace ASPNETCore.Application.Services
             }
         }
         public async Task UpdateAsync(
-    CreateREObjectDTO o,
-    IFormFileCollection? files = null,
-    IWebHostEnvironment? env = null,
-    IEnumerable<int>? imagesToDelete = null)
+            CreateREObjectDTO o,
+            IFormFileCollection? files = null,
+            IWebHostEnvironment? env = null,
+            IEnumerable<int>? imagesToDelete = null)
         {
             var obj = await _reObjectRepository.GetByIdAsync(o.Id);
             if (obj == null)
@@ -197,17 +208,9 @@ namespace ASPNETCore.Application.Services
             obj.TypeId = o.TypeId;
             obj.StatusId = o.StatusId;
 
-            //// Удаляем изображения, помеченные для удаления
+            // Удаляем изображения, помеченные для удаления
             if (imagesToDelete != null && imagesToDelete.Any())
             {
-                //var imagesForRemoval = obj.ObjectImages
-                //    .Where(img => imagesToDelete.Contains(img.Id))
-                //    .ToList();
-
-                //foreach (var img in imagesForRemoval)
-                //{
-                //    obj.ObjectImages.Remove(img);
-                //}
                 foreach (int id in imagesToDelete)
                     await _imageRepository.DeleteAsync(id);
             }
@@ -240,6 +243,44 @@ namespace ASPNETCore.Application.Services
             {
                 throw new ApplicationException($"Ошибка при удалении объекта: {ex.Message}", ex);
             }
+        }
+        public async Task<IEnumerable<REObjectDTO>> GetFilteredAsync(
+            int? typeId,
+            int? dealTypeId,
+            int? statusId,
+            bool isAdmin = false)
+        {
+            // Для не-админов 1 по умолчанию
+            var effectiveStatusId = isAdmin ? statusId : 1;
+
+            var objects = await _reObjectRepository.GetFilteredAsync(
+                typeId,
+                dealTypeId,
+                effectiveStatusId);
+
+            return objects.Select(o => new REObjectDTO
+            {
+                Id = o.Id,
+                Rooms = o.Rooms,
+                Floors = o.Floors,
+                Building = o.Building,
+                Roomnum = o.Roomnum,
+                Square = o.Square,
+                Street = o.Street,
+                DealTypeId = o.DealTypeId,
+                Price = o.Price,
+                TypeId = o.TypeId,
+                StatusId = o.StatusId,
+                Status = o.Status != null ? new Status { Id = o.Status.Id, StatusName = o.Status.StatusName } : null,
+                ObjectType = o.ObjectType != null ? new ObjectType { Id = o.ObjectType.Id, TypeName = o.ObjectType.TypeName } : null,
+                DealType = o.DealType != null ? new DealType { Id = o.DealType.Id, DealName = o.DealType.DealName } : null,
+                ObjectImages = o.ObjectImages?.Select(i => new ObjectImagesDTO
+                {
+                    Id = i.Id,
+                    ImagePath = i.ImagePath,
+                    ObjectId = i.ObjectId
+                }).ToList() ?? new List<ObjectImagesDTO>()
+            });
         }
     }
 }

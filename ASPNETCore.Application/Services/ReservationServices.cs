@@ -1,16 +1,19 @@
 ﻿using ASPNETCore.Application.DTO;
 using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
+using ASPNETCore.Infrastructure.Repositories;
 
 namespace ASPNETCore.Application.Services
 {
     public class ReservationServices
     {
         private readonly IReservationRepository _reservationRepository;
+        private readonly IREObjectRepository _reobjRepository;
 
-        public ReservationServices(IReservationRepository reservationRepository)
+        public ReservationServices(IReservationRepository reservationRepository, IREObjectRepository reobjRepository)
         {
             _reservationRepository = reservationRepository;
+            _reobjRepository = reobjRepository;
         }
 
         // Получение всех броней
@@ -58,6 +61,11 @@ namespace ASPNETCore.Application.Services
         // Добавление новой брони
         public async Task AddAsync(CreateReservationDTO r)
         {
+            if (r.EndDate < r.StartDate)
+                throw new ArgumentException("Ошибка даты");
+            var obj = await _reobjRepository.GetByIdAsync(r.ObjectId);
+            if (obj?.StatusId != 1)
+                throw new ArgumentException("Объект невозможно забронировать");
             var reservation = new Reservation
             {
                 ObjectId = r.ObjectId,
@@ -67,6 +75,8 @@ namespace ASPNETCore.Application.Services
                 ResStatusId = r.ResStatusId
             };
             await _reservationRepository.AddAsync(reservation);
+            obj.StatusId = 2;
+            await _reobjRepository.UpdateAsync(obj);
         }
 
         // Обновление брони
@@ -82,6 +92,12 @@ namespace ASPNETCore.Application.Services
                 reservation.ResStatusId = r.ResStatusId;
 
                 await _reservationRepository.UpdateAsync(reservation);
+            }
+            if (r.ResStatusId == 3)
+            {
+                var obj = await _reobjRepository.GetByIdAsync(r.ObjectId);
+                obj.StatusId = 1;
+                await _reobjRepository.UpdateAsync(obj);
             }
         }
 

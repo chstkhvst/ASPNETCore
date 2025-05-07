@@ -35,6 +35,6 @@ namespace ASPNETCore.Application.DTO
         public virtual Status Status { get; set; }
 
         public virtual ObjectType ObjectType { get; set; }
-        public virtual ICollection<ObjectImagesDTO> ObjectImages { get; set; }
+        public virtual ICollection<ObjectImagesDTO> ObjectImages { get; set; } = new List<ObjectImagesDTO>();
     }
 }

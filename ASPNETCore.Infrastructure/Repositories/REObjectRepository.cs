@@ -24,8 +24,9 @@ namespace ASPNETCore.Infrastructure.Repositories
         public async Task<REObject> GetByIdAsync(int id)
         {
             return await _context.Objects
-                //.Include(o => o.ObjectType)
-                //.Include(o => o.Status)
+                .Include(o => o.ObjectType)
+                .Include(o => o.Status)
+                .Include(o => o.DealType)
                 .Include(o => o.ObjectImages)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == id);
@@ -109,6 +110,37 @@ namespace ASPNETCore.Infrastructure.Repositories
 
                 await _context.SaveChangesAsync();
             }
+        }
+        public async Task<IEnumerable<REObject>> GetFilteredAsync(
+            int? typeId,
+            int? dealTypeId,
+            int? statusId)
+        {
+            var query = _context.Objects
+                .Include(o => o.ObjectType)
+                .Include(o => o.Status)
+                .Include(o => o.DealType)
+                .Include(o => o.ObjectImages)
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Применяем фильтры, если они указаны
+            if (typeId.HasValue)
+            {
+                query = query.Where(o => o.TypeId == typeId.Value);
+            }
+
+            if (dealTypeId.HasValue)
+            {
+                query = query.Where(o => o.DealTypeId == dealTypeId.Value);
+            }
+
+            if (statusId.HasValue)
+            {
+                query = query.Where(o => o.StatusId == statusId.Value);
+            }
+
+            return await query.ToListAsync();
         }
     }
 }

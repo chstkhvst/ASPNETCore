@@ -44,6 +44,7 @@ namespace ASPNETCore.Infrastructure.Repositories
                     .ThenInclude(o => o.Status)
                 .Include(r => r.ResStatus)        // Загружаем статус брони
                 .Include(r => r.User)             // Загружаем пользователя
+                .OrderByDescending(r => r.Id)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -51,8 +52,8 @@ namespace ASPNETCore.Infrastructure.Repositories
         // Добавить новую бронь
         public async Task AddAsync(Reservation reservation)
         {
-            if (reservation.Object.StatusId == 1)
-                throw new ArgumentException("Объект невозможно забронировать");
+            //if (reservation.Object.StatusId != 1)
+            //    throw new ArgumentException("Объект невозможно забронировать");
             _context.Reservations.Add(reservation);
             int changes = await _context.SaveChangesAsync();
             Console.WriteLine($"Добавлено {changes} брони в БД.");
