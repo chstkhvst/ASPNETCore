@@ -57,6 +57,7 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.User)
                 .Include(c => c.User)
+                .OrderByDescending(c => c.Id)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -85,14 +86,14 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .Include(r => r.Object)
                 .FirstOrDefaultAsync(r => r.Id == contract.ReservationId);
 
-            if (reservation == null)
-                throw new ArgumentException($"Reservation с ID {contract.ReservationId} не найдена.");
-            if (reservation.ResStatusId != 1)
-                throw new ArgumentException($"Договор по брони уже заключен");
-            contract.SignDate = DateTime.UtcNow;
-            int addPrice = reservation.Object.Price/10;
-            contract.Total = reservation.Object.Price + addPrice;
-            reservation.ResStatusId = 2;
+            //if (reservation == null)
+            //    throw new ArgumentException($"Reservation с ID {contract.ReservationId} не найдена.");
+            //if (reservation.ResStatusId != 1)
+            //    throw new ArgumentException($"Договор по брони уже заключен");
+            //contract.SignDate = DateTime.UtcNow;
+            //int addPrice = reservation.Object.Price/10;
+            //contract.Total = reservation.Object.Price + addPrice;
+            //reservation.ResStatusId = 2;
 
             _context.Contracts.Add(contract);
             await _context.SaveChangesAsync();

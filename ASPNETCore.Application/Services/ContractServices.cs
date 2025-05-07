@@ -11,10 +11,12 @@ namespace ASPNETCore.Application.Services
     public class ContractServices
     {
         private readonly IContractRepository _contractRepository;
+        private readonly IReservationRepository _resRepository;
 
-        public ContractServices(IContractRepository contractRepository)
+        public ContractServices(IContractRepository contractRepository, IReservationRepository resRepository)
         {
             _contractRepository = contractRepository;
+            _resRepository = resRepository;
         }
 
         // Получение всех контрактов
@@ -84,13 +86,25 @@ namespace ASPNETCore.Application.Services
 
         public async Task AddAsync(CreateContractDTO contractDto)
         {
+            var reser = await _resRepository.GetByIdAsync(contractDto.ReservationId);
+            if (reser == null)
+                throw new ArgumentException($"Reservation с ID {contractDto.ReservationId} не найдена.");
+            if (reser.ResStatusId != 1)
+                throw new ArgumentException($"Договор по брони уже заключен");
+
+            int addPrice = reser.Object.Price / 10;
+            if (addPrice > 70000) addPrice = 70000;
+
             var contract = new Contract
             {
                 ReservationId = contractDto.ReservationId,
-                UserId = contractDto.UserId
-                // SignDate и Total будут установлены в репозитории
+                UserId = contractDto.UserId,
+                SignDate = DateTime.UtcNow,
+                Total = reser.Object.Price + addPrice
             };
             await _contractRepository.AddAsync(contract);
+            reser.ResStatusId = 2;
+            await _resRepository.UpdateAsync(reser);
         }
 
         // Обновление контракта
