@@ -11,6 +11,9 @@ using WebAPI.Model;
 
 namespace ProjectManagement.Api.Controllers
 {
+    /// <summary>
+    /// Контроллер для управления аутентификацией и профилями пользователей
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
@@ -19,12 +22,26 @@ namespace ProjectManagement.Api.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="AccountController"/>
+        /// </summary>
+        /// <param name="userManager">Менеджер пользователей</param>
+        /// <param name="signInManager">Менеджер аутентификации</param>
+        /// <param name="configuration">Конфигурация приложения</param>
         public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
         }
+
+        /// <summary>
+        /// Регистрирует нового пользователя
+        /// </summary>
+        /// <param name="model">Данные для регистрации</param>
+        /// <returns>Результат операции регистрации</returns>
+        /// <response code="200">Пользователь успешно зарегистрирован</response>
+        /// <response code="400">Некорректные данные запроса</response>
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterModel model)
         {
@@ -41,18 +58,25 @@ namespace ProjectManagement.Api.Controllers
 
                 return BadRequest(ModelState);
             }
-            //var user = new User { UserName = model.UserName, Email = model.Email };
+
             var user = new User { UserName = model.UserName, FullName = model.FullName, PhoneNumber = model.PhoneNumber };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                //await _userManager.AddToRoleAsync(user, model.Role);
                 await _userManager.AddToRoleAsync(user, "User");
                 return Ok(new { Message = "User registered successfully" });
             }
             return BadRequest(result.Errors);
         }
 
+        /// <summary>
+        /// Выполняет вход пользователя в систему
+        /// </summary>
+        /// <param name="model">Данные для входа</param>
+        /// <returns>JWT-токен и информация о пользователе</returns>
+        /// <response code="200">Успешный вход</response>
+        /// <response code="400">Некорректные данные запроса</response>
+        /// <response code="401">Неверные учетные данные</response>
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginModel model)
         {
@@ -74,6 +98,12 @@ namespace ProjectManagement.Api.Controllers
 
             return Unauthorized();
         }
+
+        /// <summary>
+        /// Выполняет выход пользователя из системы
+        /// </summary>
+        /// <returns>Результат операции выхода</returns>
+        /// <response code="200">Успешный выход</response>
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
@@ -82,6 +112,12 @@ namespace ProjectManagement.Api.Controllers
             return Ok(new { Message = "User logged out successfully" });
         }
 
+        /// <summary>
+        /// Проверяет валидность токена текущего пользователя
+        /// </summary>
+        /// <returns>Информация о текущем пользователе</returns>
+        /// <response code="200">Токен валиден</response>
+        /// <response code="401">Недействительный токен</response>
         [HttpGet("validate")]
         public async Task<IActionResult> ValidateToken()
         {
@@ -93,39 +129,36 @@ namespace ProjectManagement.Api.Controllers
             IList<string> roles = await _userManager.GetRolesAsync(usr);
             string userRole = roles.FirstOrDefault();
             return Ok(new { message = "Сессия активна", userName = usr.UserName, userRole });
-
         }
-        //[Authorize]
-        //[HttpGet("profile")]
-        //public async Task<IActionResult> GetCurrentUser()
-        //{
-        //    var user = await _userManager.GetUserAsync(HttpContext.User);
-        //    if (user == null)
-        //    {
-        //        return Unauthorized(new { message = "Пользователь не найден" });
-        //    }
 
-        //    var roles = await _userManager.GetRolesAsync(user);
-
-        //    return Ok(new
-        //    {
-        //        id = user.Id,
-        //        userName = user.UserName,
-        //        fullName = user.FullName,
-        //        phoneNumber = user.PhoneNumber,
-        //        //userRole = roles.FirstOrDefault()
-        //    });
-        //}
+        /// <summary>
+        /// Получает профиль текущего пользователя с бронированиями
+        /// </summary>
+        /// <returns>Полная информация о профиле пользователя</returns>
+        /// <response code="200">Профиль успешно получен</response>
+        /// <response code="401">Пользователь не авторизован</response>
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> GetCurrentUser()
         {
+            //var user = await _userManager.Users
+            //    .Include(u => u.Reservation)
+            //        .ThenInclude(r => r.Object)
+            //    .Include(u => u.Reservation)
+            //        .ThenInclude(r => r.ResStatus)
+            //    .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
+
             var user = await _userManager.Users
-                .Include(u => u.Reservation)
-                    .ThenInclude(r => r.Object)   // Загрузка связанных объектов
-                .Include(u => u.Reservation)
-                    .ThenInclude(r => r.ResStatus) // Загрузка статусов
-                .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
+    .Include(u => u.Reservation)
+        .ThenInclude(r => r.Object)
+    .Include(u => u.Reservation)
+        .ThenInclude(r => r.ResStatus)
+    .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
+
+            if (user != null)
+            {
+                user.Reservation = user.Reservation.OrderByDescending(r => r.Id).ToList();
+            }
 
             if (user == null)
             {
@@ -166,7 +199,14 @@ namespace ProjectManagement.Api.Controllers
             return Ok(userProfile);
         }
 
-
+        /// <summary>
+        /// Обновляет профиль текущего пользователя
+        /// </summary>
+        /// <param name="model">Новые данные профиля</param>
+        /// <returns>Результат обновления профиля</returns>
+        /// <response code="200">Профиль успешно обновлен</response>
+        /// <response code="400">Некорректные данные запроса</response>
+        /// <response code="401">Пользователь не авторизован</response>
         [Authorize]
         [HttpPut("editprofile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileModel model)
@@ -182,7 +222,6 @@ namespace ProjectManagement.Api.Controllers
                 return Unauthorized(new { message = "Пользователь не найден" });
             }
 
-            // Обновляем только разрешенные поля
             user.FullName = model.FullName;
             user.PhoneNumber = model.PhoneNumber;
 
@@ -201,6 +240,10 @@ namespace ProjectManagement.Api.Controllers
             return BadRequest(result.Errors);
         }
 
+        /// <summary>
+        /// Получает список всех пользователей системы
+        /// </summary>
+        /// <returns>Список пользователей с их ролями</returns>
         [HttpGet("all-users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -222,6 +265,12 @@ namespace ProjectManagement.Api.Controllers
 
             return Ok(users);
         }
+
+        /// <summary>
+        /// Генерирует JWT-токен для пользователя
+        /// </summary>
+        /// <param name="user">Пользователь</param>
+        /// <returns>Сгенерированный JWT-токен</returns>
         private string GenerateJwtToken(User user)
         {
             var claims = new List<Claim>
@@ -249,5 +298,4 @@ namespace ProjectManagement.Api.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
-
 }

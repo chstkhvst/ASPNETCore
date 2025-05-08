@@ -1,9 +1,5 @@
 ﻿using ASPNETCore.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ASPNETCore.Domain;
 
 namespace ASPNETCore.Domain.Interfaces
 {
@@ -43,5 +39,25 @@ namespace ASPNETCore.Domain.Interfaces
             int? typeId,
             int? dealTypeId,
             int? statusId);
+        /// <summary>
+        /// Получает все объекты недвижимости с пагинацией.
+        /// </summary>
+        /// <param name="page">Номер страницы (начиная с 1)</param>
+        /// <param name="pageSize">Количество элементов на странице</param>
+        Task<PaginatedResponse<REObject>> GetAllPaginatedAsync(int page, int pageSize);
+        /// <summary>
+        /// Получает отфильтрованные объекты недвижимости с пагинацией.
+        /// </summary>
+        /// <param name="typeId">Фильтр по типу объекта</param>
+        /// <param name="dealTypeId">Фильтр по типу сделки</param>
+        /// <param name="statusId">Фильтр по статусу</param>
+        /// <param name="page">Номер страницы (начиная с 1)</param>
+        /// <param name="pageSize">Количество элементов на странице</param>
+        Task<PaginatedResponse<REObject>> GetFilteredPaginatedAsync(
+            int? typeId,
+            int? dealTypeId,
+            int? statusId,
+            int page,
+            int pageSize);
     }
 }

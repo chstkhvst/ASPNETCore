@@ -1,25 +1,32 @@
 ﻿using ASPNETCore.Application.DTO;
 using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ASPNETCore.Application.Services
 {
+    /// <summary>
+    /// Сервис для работы с договорами
+    /// </summary>
     public class ContractServices
     {
         private readonly IContractRepository _contractRepository;
         private readonly IReservationRepository _resRepository;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="ContractServices"/>
+        /// </summary>
+        /// <param name="contractRepository">Репозиторий для работы с договорами</param>
+        /// <param name="resRepository">Репозиторий для работы с бронированиями</param>
         public ContractServices(IContractRepository contractRepository, IReservationRepository resRepository)
         {
             _contractRepository = contractRepository;
             _resRepository = resRepository;
         }
 
-        // Получение всех контрактов
+        /// <summary>
+        /// Получает все договоры
+        /// </summary>
+        /// <returns>Коллекция DTO договоров</returns>
         public async Task<IEnumerable<ContractDTO>> GetAllAsync()
         {
             var contracts = await _contractRepository.GetAllAsync();
@@ -35,7 +42,11 @@ namespace ASPNETCore.Application.Services
             });
         }
 
-        // Получение контракта по ID
+        /// <summary>
+        /// Получает договор по идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор договора</param>
+        /// <returns>DTO договора или null, если не найден</returns>
         public async Task<ContractDTO> GetByIdAsync(int id)
         {
             var contract = await _contractRepository.GetByIdAsync(id);
@@ -57,7 +68,11 @@ namespace ASPNETCore.Application.Services
             };
         }
 
-        // Поиск контрактов по дате подписания
+        /// <summary>
+        /// Ищет договоры по дате подписания
+        /// </summary>
+        /// <param name="signDate">Дата подписания</param>
+        /// <returns>Коллекция DTO договоров</returns>
         public async Task<IEnumerable<ContractDTO>> SearchBySignDateAsync(DateTime signDate)
         {
             var contracts = await _contractRepository.SearchBySignDateAsync(signDate);
@@ -71,19 +86,16 @@ namespace ASPNETCore.Application.Services
             });
         }
 
-        // Добавление нового контракта
-        //public async Task AddAsync(CreateContractDTO contractDto)
-        //{
-        //    var contract = new Contract
-        //    {
-        //        SignDate = contractDto.SignDate,
-        //        ReservationId = contractDto.ReservationId,
-        //        UserId = contractDto.UserId,
-        //        Total = contractDto.Total
-        //    };
-        //    await _contractRepository.AddAsync(contract);
-        //}
-
+        /// <summary>
+        /// Добавляет новый контракт
+        /// </summary>
+        /// <param name="contractDto">DTO для создания договора</param>
+        /// <exception cref="ArgumentException">
+        /// Выбрасывается если:
+        /// - Бронирование не найдено
+        /// - По брони уже заключен договор
+        /// </exception>
+        /// <returns>Асинхронная задача</returns>
         public async Task AddAsync(CreateContractDTO contractDto)
         {
             var reser = await _resRepository.GetByIdAsync(contractDto.ReservationId);
@@ -107,7 +119,11 @@ namespace ASPNETCore.Application.Services
             await _resRepository.UpdateAsync(reser);
         }
 
-        // Обновление контракта
+        /// <summary>
+        /// Обновляет существующий договор
+        /// </summary>
+        /// <param name="contractDto">DTO с обновленными данными договора</param>
+        /// <returns>Асинхронная задача</returns>
         public async Task UpdateAsync(CreateContractDTO contractDto)
         {
             var contract = await _contractRepository.GetByIdAsync(contractDto.Id);
@@ -122,7 +138,12 @@ namespace ASPNETCore.Application.Services
             }
         }
 
-        // Удаление контракта
+        /// <summary>
+        /// Удаляет договор по идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор договора</param>
+        /// <exception cref="ApplicationException">Выбрасывается при ошибке удаления</exception>
+        /// <returns>Асинхронная задача</returns>
         public async Task DeleteAsync(int id)
         {
             try

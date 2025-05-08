@@ -9,27 +9,39 @@ using System.Threading.Tasks;
 
 namespace ASPNETCore.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Репозиторий для работы с договорами в системе.
+    /// </summary>
     public class ContractRepository : IContractRepository
     {
         private readonly ApplicationDbContext _context;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="ContractRepository"/>.
+        /// </summary>
+        /// <param name="context">Контекст базы данных.</param>
         public ContractRepository(ApplicationDbContext context)
         {
             _context = context;
         }
 
+        /// <summary>
+        /// Получает договор по указанному идентификатору.
+        /// </summary>
+        /// <param name="id">Идентификатор договора.</param>
+        /// <returns>Найденный договор со связанными данными или null, если не найден.</returns>
         public async Task<Contract> GetByIdAsync(int id)
         {
             return await _context.Contracts
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.Object)
-                        .ThenInclude(o => o.DealType)   // Загружаем DealType
+                        .ThenInclude(o => o.DealType)
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.Object)
-                        .ThenInclude(o => o.ObjectType) // Загружаем ObjectType
+                        .ThenInclude(o => o.ObjectType)
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.Object)
-                        .ThenInclude(o => o.Status)    // Загружаем Status
+                        .ThenInclude(o => o.Status)
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.ResStatus)
                 .Include(c => c.Reservation)
@@ -38,20 +50,22 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-
-
+        /// <summary>
+        /// Получает все договоры в системе.
+        /// </summary>
+        /// <returns>Коллекция всех договоров, отсортированная по идентификатору в порядке убывания.</returns>
         public async Task<IEnumerable<Contract>> GetAllAsync()
         {
             return await _context.Contracts
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.Object)
-                        .ThenInclude(o => o.DealType)   // Загружаем DealType
+                        .ThenInclude(o => o.DealType)
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.Object)
-                        .ThenInclude(o => o.ObjectType) // Загружаем ObjectType
+                        .ThenInclude(o => o.ObjectType)
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.Object)
-                        .ThenInclude(o => o.Status)    // Загружаем Status
+                        .ThenInclude(o => o.Status)
                 .Include(c => c.Reservation)
                     .ThenInclude(r => r.ResStatus)
                 .Include(c => c.Reservation)
@@ -62,8 +76,11 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-
-        // Поиск контрактов по дате подписания
+        /// <summary>
+        /// Выполняет поиск договоров по дате подписания.
+        /// </summary>
+        /// <param name="signDate">Дата подписания для поиска.</param>
+        /// <returns>Коллекция договоров, подписанных в указанную дату.</returns>
         public async Task<IEnumerable<Contract>> SearchBySignDateAsync(DateTime signDate)
         {
             return await _context.Contracts
@@ -73,34 +90,26 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // Добавить новый контракт
-        //public async Task AddAsync(Contract contract)
-        //{
-        //    _context.Contracts.Add(contract);
-        //    int changes = await _context.SaveChangesAsync();
-        //    Console.WriteLine($"Добавлено {changes} контрактов в БД.");
-        //}
+        /// <summary>
+        /// Добавляет новый договор в систему.
+        /// </summary>
+        /// <param name="contract">Добавляемый договор.</param>
+        /// <returns>Асинхронная задача.</returns>
         public async Task AddAsync(Contract contract)
         {
             var reservation = await _context.Reservations
                 .Include(r => r.Object)
                 .FirstOrDefaultAsync(r => r.Id == contract.ReservationId);
-
-            //if (reservation == null)
-            //    throw new ArgumentException($"Reservation с ID {contract.ReservationId} не найдена.");
-            //if (reservation.ResStatusId != 1)
-            //    throw new ArgumentException($"Договор по брони уже заключен");
-            //contract.SignDate = DateTime.UtcNow;
-            //int addPrice = reservation.Object.Price/10;
-            //contract.Total = reservation.Object.Price + addPrice;
-            //reservation.ResStatusId = 2;
-
             _context.Contracts.Add(contract);
             await _context.SaveChangesAsync();
         }
 
-
-        // Обновить контракт
+        /// <summary>
+        /// Обновляет существующий договор.
+        /// </summary>
+        /// <param name="contract">Договор с обновленными данными.</param>
+        /// <exception cref="KeyNotFoundException">Выбрасывается, если договор не найден.</exception>
+        /// <returns>Асинхронная задача.</returns>
         public async Task UpdateAsync(Contract contract)
         {
             var existingContract = await _context.Contracts.FindAsync(contract.Id);
@@ -111,7 +120,11 @@ namespace ASPNETCore.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        // Удалить контракт
+        /// <summary>
+        /// Удаляет договор по указанному идентификатору.
+        /// </summary>
+        /// <param name="id">Идентификатор удаляемого договора.</param>
+        /// <returns>Асинхронная задача.</returns>
         public async Task DeleteAsync(int id)
         {
             var contract = await _context.Contracts.FindAsync(id);

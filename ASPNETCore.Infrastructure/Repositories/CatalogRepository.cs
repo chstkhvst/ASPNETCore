@@ -2,13 +2,11 @@
 using ASPNETCore.Domain.Interfaces;
 using ASPNETCore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASPNETCore.Infrastructure.Repositories
 {
     /// <summary>
-    /// Репозиторий для работы со справочными данными системы (каталогами).
+    /// Репозиторий для работы со справочными данными системы.
     /// </summary>
     public class CatalogRepository : ICatalogRepository
     {

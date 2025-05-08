@@ -1,12 +1,8 @@
 ﻿using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
 using ASPNETCore.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using ASPNETCore.Domain;
 
 namespace ASPNETCore.Infrastructure.Repositories
 {
@@ -156,5 +152,63 @@ namespace ASPNETCore.Infrastructure.Repositories
 
             return await query.ToListAsync();
         }
+
+        public async Task<PaginatedResponse<REObject>> GetAllPaginatedAsync(int page, int pageSize)
+        {
+            var query = _context.Objects
+                .Include(o => o.ObjectType)
+                .Include(o => o.Status)
+                .Include(o => o.DealType)
+                .Include(o => o.ObjectImages)
+                .AsNoTracking()
+                .AsQueryable();
+
+            return await GetPaginatedResult(query, page, pageSize);
+        }
+
+        public async Task<PaginatedResponse<REObject>> GetFilteredPaginatedAsync(
+            int? typeId,
+            int? dealTypeId,
+            int? statusId,
+            int page,
+            int pageSize)
+        {
+            var query = _context.Objects
+                .Include(o => o.ObjectType)
+                .Include(o => o.Status)
+                .Include(o => o.DealType)
+                .Include(o => o.ObjectImages)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (typeId.HasValue)
+                query = query.Where(o => o.TypeId == typeId.Value);
+
+            if (dealTypeId.HasValue)
+                query = query.Where(o => o.DealTypeId == dealTypeId.Value);
+
+            if (statusId.HasValue)
+                query = query.Where(o => o.StatusId == statusId.Value);
+
+            return await GetPaginatedResult(query, page, pageSize);
+        }
+
+        private async Task<PaginatedResponse<REObject>> GetPaginatedResult(IQueryable<REObject> query, int page, int pageSize)
+        {
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResponse<REObject>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+        }
+
     }
 }

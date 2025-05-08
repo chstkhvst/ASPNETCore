@@ -1,22 +1,32 @@
 ﻿using ASPNETCore.Application.DTO;
 using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
-using ASPNETCore.Infrastructure.Repositories;
 
 namespace ASPNETCore.Application.Services
 {
+    /// <summary>
+    /// Сервис для работы с бронированиями объектов недвижимости
+    /// </summary>
     public class ReservationServices
     {
         private readonly IReservationRepository _reservationRepository;
         private readonly IREObjectRepository _reobjRepository;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="ReservationServices"/>
+        /// </summary>
+        /// <param name="reservationRepository">Репозиторий бронирований</param>
+        /// <param name="reobjRepository">Репозиторий объектов недвижимости</param>
         public ReservationServices(IReservationRepository reservationRepository, IREObjectRepository reobjRepository)
         {
             _reservationRepository = reservationRepository;
             _reobjRepository = reobjRepository;
         }
 
-        // Получение всех броней
+        /// <summary>
+        /// Получает все бронирования
+        /// </summary>
+        /// <returns>Коллекция DTO бронирований</returns>
         public async Task<IEnumerable<ReservationDTO>> GetAllAsync()
         {
             var reservations = await _reservationRepository.GetAllAsync();
@@ -34,7 +44,11 @@ namespace ASPNETCore.Application.Services
             });
         }
 
-        // Получение брони по ID
+        /// <summary>
+        /// Получает бронирование по идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор бронирования</param>
+        /// <returns>DTO бронирования или null, если не найдено</returns>
         public async Task<ReservationDTO> GetByIdAsync(int id)
         {
             var r = await _reservationRepository.GetByIdAsync(id);
@@ -58,7 +72,16 @@ namespace ASPNETCore.Application.Services
             };
         }
 
-        // Добавление новой брони
+        /// <summary>
+        /// Добавляет новое бронирование
+        /// </summary>
+        /// <param name="r">DTO для создания бронирования</param>
+        /// <exception cref="ArgumentException">
+        /// Выбрасывается при:
+        /// - Неправильной дате (EndDate меньше StartDate)
+        /// - Невозможности забронировать объект
+        /// </exception>
+        /// <returns>Асинхронная задача</returns>
         public async Task AddAsync(CreateReservationDTO r)
         {
             if (r.EndDate < r.StartDate)
@@ -79,7 +102,14 @@ namespace ASPNETCore.Application.Services
             await _reobjRepository.UpdateAsync(obj);
         }
 
-        // Обновление брони
+        /// <summary>
+        /// Обновляет существующее бронирование
+        /// </summary>
+        /// <param name="r">DTO с обновленными данными бронирования</param>
+        /// <remarks>
+        /// При установке ResStatusId = 3 (отмена) возвращает объект в доступное состояние (StatusId = 1)
+        /// </remarks>
+        /// <returns>Асинхронная задача</returns>
         public async Task UpdateAsync(CreateReservationDTO r)
         {
             var reservation = await _reservationRepository.GetByIdAsync(r.Id);
@@ -101,7 +131,12 @@ namespace ASPNETCore.Application.Services
             }
         }
 
-        // Удаление брони
+        /// <summary>
+        /// Удаляет бронирование
+        /// </summary>
+        /// <param name="id">Идентификатор бронирования</param>
+        /// <exception cref="ApplicationException">Выбрасывается при ошибке удаления</exception>
+        /// <returns>Асинхронная задача</returns>
         public async Task DeleteAsync(int id)
         {
             try

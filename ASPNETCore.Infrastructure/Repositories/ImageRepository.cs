@@ -9,16 +9,27 @@ using System.Threading.Tasks;
 
 namespace ASPNETCore.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Репозиторий для работы с изображениями объектов недвижимости
+    /// </summary>
     public class ImageRepository : IImageRepository
     {
         private readonly ApplicationDbContext _context;
 
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="ImageRepository"/>
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
         public ImageRepository(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // Получение всех изображений для конкретного объекта
+        /// <summary>
+        /// Получает все изображения для указанного объекта недвижимости
+        /// </summary>
+        /// <param name="objectId">Идентификатор объекта недвижимости</param>
+        /// <returns>Коллекция изображений объекта</returns>
         public async Task<IEnumerable<ObjectImages>> GetByObjectIdAsync(int objectId)
         {
             return await _context.ObjectImages
@@ -27,7 +38,11 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // Добавление нового изображения
+        /// <summary>
+        /// Добавляет новое изображение для объекта недвижимости
+        /// </summary>
+        /// <param name="image">Добавляемое изображение</param>
+        /// <returns>Асинхронная задача</returns>
         public async Task AddAsync(ObjectImages image)
         {
             _context.ObjectImages.Add(image);
@@ -35,7 +50,11 @@ namespace ASPNETCore.Infrastructure.Repositories
             Console.WriteLine($"Добавлено {changes} изображений в БД.");
         }
 
-        // Удаление изображения по ID
+        /// <summary>
+        /// Удаляет изображение по указанному идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор удаляемого изображения</param>
+        /// <returns>Асинхронная задача</returns>
         public async Task DeleteAsync(int id)
         {
             var image = await _context.ObjectImages.FindAsync(id);
