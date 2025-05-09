@@ -13,15 +13,17 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class CatalogController : ControllerBase
     {
+        private readonly ILogger<CatalogController> _logger;
         private readonly CatalogService _catalogService;
 
         /// <summary>
         /// Инициализирует новый экземпляр контроллера каталогов
         /// </summary>
         /// <param name="catalogService">Сервис для работы со справочными данными</param>
-        public CatalogController(CatalogService catalogService)
+        public CatalogController(CatalogService catalogService, ILogger<CatalogController> lo)
         {
             _catalogService = catalogService;
+            _logger = lo;
         }
 
         /// <summary>
@@ -32,6 +34,8 @@ namespace WebAPI.Controllers
         [HttpGet("dealtypes")]
         public async Task<ActionResult<IEnumerable<DealType>>> GetDealTypes()
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает все типы сделок");
             var dealTypes = await _catalogService.GetAllDealTypesAsync();
             return Ok(dealTypes);
         }
@@ -46,6 +50,8 @@ namespace WebAPI.Controllers
         [HttpGet("dealtypes/{id}")]
         public async Task<ActionResult<DealType>> GetDealType(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает тип сделки с id {id}");
             var dealType = await _catalogService.GetDealTypeByIdAsync(id);
             if (dealType == null) return NotFound();
             return Ok(dealType);
@@ -59,6 +65,8 @@ namespace WebAPI.Controllers
         [HttpGet("objecttypes")]
         public async Task<ActionResult<IEnumerable<ObjectType>>> GetObjectTypes()
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает все типы объектов");
             var objectTypes = await _catalogService.GetAllObjectTypesAsync();
             return Ok(objectTypes);
         }
@@ -73,6 +81,8 @@ namespace WebAPI.Controllers
         [HttpGet("objecttypes/{id}")]
         public async Task<ActionResult<ObjectType>> GetObjectType(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает тип объекта с id {id}");
             var objectType = await _catalogService.GetObjectTypeByIdAsync(id);
             if (objectType == null) return NotFound();
             return Ok(objectType);
@@ -86,6 +96,8 @@ namespace WebAPI.Controllers
         [HttpGet("statuses")]
         public async Task<ActionResult<IEnumerable<Status>>> GetStatuses()
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает все статусы");
             var statuses = await _catalogService.GetAllStatusesAsync();
             return Ok(statuses);
         }
@@ -100,6 +112,8 @@ namespace WebAPI.Controllers
         [HttpGet("statuses/{id}")]
         public async Task<ActionResult<Status>> GetStatus(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает статус объекта с id {id}");
             var status = await _catalogService.GetStatusByIdAsync(id);
             if (status == null) return NotFound();
             return Ok(status);
@@ -113,6 +127,8 @@ namespace WebAPI.Controllers
         [HttpGet("resstatuses")]
         public async Task<ActionResult<IEnumerable<ResStatus>>> GetResStatuses()
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает все статусы броней");
             var resStatuses = await _catalogService.GetAllResStatusesAsync();
             return Ok(resStatuses);
         }
@@ -127,6 +143,8 @@ namespace WebAPI.Controllers
         [HttpGet("resstatuses/{id}")]
         public async Task<ActionResult<ResStatus>> GetResStatus(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает статус брони с id {id}");
             var resStatus = await _catalogService.GetResStatusByIdAsync(id);
             if (resStatus == null) return NotFound();
             return Ok(resStatus);

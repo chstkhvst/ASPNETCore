@@ -3,6 +3,7 @@ using ASPNETCore.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ASPNETCore.Domain;
+using ASPNETCore.Domain.Entities;
 
 namespace WebAPI.Controllers
 {
@@ -15,16 +16,18 @@ namespace WebAPI.Controllers
     {
         private readonly REObjectServices _reObjectService;
         private readonly IWebHostEnvironment _env;
+        private readonly ILogger<REObjectController> _logger;
 
         /// <summary>
         /// Инициализирует новый экземпляр контроллера
         /// </summary>
         /// <param name="reObjectService">Сервис для работы с объектами недвижимости</param>
         /// <param name="env">Окружение веб-хоста</param>
-        public REObjectController(REObjectServices reObjectService, IWebHostEnvironment env)
+        public REObjectController(REObjectServices reObjectService, IWebHostEnvironment env, ILogger<REObjectController> logger)
         {
             _reObjectService = reObjectService;
             _env = env;
+            _logger = logger;
         }
 
         /// <summary>
@@ -34,23 +37,15 @@ namespace WebAPI.Controllers
         /// <returns>Список объектов недвижимости</returns>
         /// <response code="200">Успешное выполнение запроса</response>
         /// <response code="401">Требуется авторизация</response>
-        //[HttpGet]
-        //[Authorize]
-        //public async Task<ActionResult<IEnumerable<REObjectDTO>>> GetREObjects([FromQuery] string? name)
-        //{
-        //    var isAdmin = User.IsInRole("admin");
-        //    var objects = string.IsNullOrEmpty(name)
-        //        ? await _reObjectService.GetAllAsync(isAdmin)
-        //        : await _reObjectService.SearchByNameAsync(name);
 
-        //    return Ok(objects);
-        //}
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<PaginatedResponse<REObjectDTO>>> GetREObjects(
             [FromQuery] int page = 1,          // Текущая страница (по умолчанию 1)
             [FromQuery] int pageSize = 5)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает список всех объектов. Страница {page}");
             var isAdmin = User.IsInRole("admin");
             var paginatedResult = await _reObjectService.GetAllPaginatedAsync(isAdmin, page, pageSize);
             return Ok(paginatedResult);
@@ -66,6 +61,8 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<REObjectDTO>> GetREObject(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает объект с ID {id}");
             var obj = await _reObjectService.GetByIdAsync(id);
             if (obj == null) return NotFound();
             return Ok(obj);
@@ -102,6 +99,8 @@ namespace WebAPI.Controllers
             [FromForm] int statusId,
             [FromForm] IFormFileCollection files)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} создает новый объект");
             try
             {
                 var reObjectDto = new CreateREObjectDTO
@@ -152,7 +151,7 @@ namespace WebAPI.Controllers
         /// <response code="200">Объект успешно обновлен</response>
         /// <response code="400">Ошибка в данных запроса</response>
         [HttpPut("{id}")]
-        public async Task<ActionResult<REObjectDTO>> UpdateProject(
+        public async Task<ActionResult<REObjectDTO>> UpdateObject(
             int id,
             [FromForm] string street,
             [FromForm] int building,
@@ -167,6 +166,8 @@ namespace WebAPI.Controllers
             [FromForm] IFormFileCollection? files,
             [FromForm] List<int>? imagesToDelete = null)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} обновляет объект с ID {id}");
             try
             {
                 var reobjectDto = new CreateREObjectDTO
@@ -208,6 +209,8 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteREObject(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} удаляет объект с ID {id}");
             try
             {
                 await _reObjectService.DeleteAsync(id);
@@ -215,6 +218,7 @@ namespace WebAPI.Controllers
             }
             catch (ApplicationException ex)
             {
+                _logger.LogError($"Ошибка при удалении объекта {ex.Message}");
                 return Conflict(new { message = ex.Message });
             }
         }
@@ -228,17 +232,6 @@ namespace WebAPI.Controllers
         /// <returns>Отфильтрованный список объектов</returns>
         /// <response code="200">Успешное выполнение запроса</response>
         /// <response code="401">Требуется авторизация</response>
-        //[HttpGet("filter")]
-        //[Authorize]
-        //public async Task<ActionResult<IEnumerable<REObjectDTO>>> GetFilteredObjects(
-        //    [FromQuery] int? typeId,
-        //    [FromQuery] int? dealTypeId,
-        //    [FromQuery] int? statusId)
-        //{
-        //    var isAdmin = User.IsInRole("admin");
-        //    var filteredObjects = await _reObjectService.GetFilteredAsync(typeId, dealTypeId, statusId, isAdmin);
-        //    return Ok(filteredObjects);
-        //}
         [HttpGet("filter")]
         [Authorize]
         public async Task<ActionResult<PaginatedResponse<REObjectDTO>>> GetFilteredObjects(
@@ -248,6 +241,8 @@ namespace WebAPI.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 5)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает список отфильтрованных объектов. Страница {page}");
             var isAdmin = User.IsInRole("admin");
             var filteredObjects = await _reObjectService.GetFilteredPaginatedAsync(
                 typeId,

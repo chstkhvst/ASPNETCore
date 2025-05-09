@@ -12,13 +12,15 @@ namespace WebAPI.Controllers
     public class ContractController : ControllerBase
     {
         private readonly ContractServices _contractService;
+        private readonly ILogger<ContractController> _logger;
 
         /// <summary>
         /// Инициализирует новый экземпляр контроллера договоров
         /// </summary>
         /// <param name="contractService">Сервис для работы с договорами</param>
-        public ContractController(ContractServices contractService)
+        public ContractController(ContractServices contractService, ILogger<ContractController> logger)
         {
+            _logger = logger;
             _contractService = contractService;
         }
 
@@ -31,6 +33,11 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ContractDTO>>> GetContracts([FromQuery] DateTime? signDate)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            if (signDate == null)
+                _logger.LogInformation($"{currUser} получает список договоров");
+            else
+                _logger.LogInformation($"{currUser} получает список договоров по дате заключения {signDate}");
             var contracts = signDate == null
                 ? await _contractService.GetAllAsync()
                 : await _contractService.SearchBySignDateAsync(signDate.Value);
@@ -48,6 +55,8 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ContractDTO>> GetContract(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает договор с id {id}");
             var contract = await _contractService.GetByIdAsync(id);
             if (contract == null) return NotFound();
             return Ok(contract);
@@ -62,6 +71,8 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ContractDTO>> CreateContract(CreateContractDTO contractDto)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} создает договор");
             await _contractService.AddAsync(contractDto);
             return CreatedAtAction(nameof(GetContract), new { id = contractDto.Id }, contractDto);
         }
@@ -77,6 +88,8 @@ namespace WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ContractDTO>> UpdateContract(int id, CreateContractDTO contractDto)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} обновляет договор с id {id}");
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (id != contractDto.Id) return BadRequest();
             await _contractService.UpdateAsync(contractDto);
@@ -93,6 +106,8 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteContract(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} удаляет договор с id {id}");
             try
             {
                 await _contractService.DeleteAsync(id);
@@ -100,6 +115,7 @@ namespace WebAPI.Controllers
             }
             catch (ApplicationException ex)
             {
+                _logger.LogError($"При удалении договора возникла ошибка {ex.Message}");
                 return Conflict(new { message = ex.Message });
             }
         }

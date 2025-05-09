@@ -105,5 +105,28 @@ namespace ASPNETCore.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        /// <summary>
+        /// Ищет бронирования по номеру телефона пользователя
+        /// </summary>
+        /// <param name="phoneNumber">Номер телефона</param>
+        /// <returns>Коллекция бронирований с полной информацией</returns>
+        public async Task<IEnumerable<Reservation>> SearchByPhoneNumberAsync(string phoneNumber)
+        {
+            return await _context.Reservations
+                .Include(r => r.Object)
+                    .ThenInclude(o => o.ObjectType)
+                .Include(r => r.Object)
+                    .ThenInclude(o => o.DealType)
+                .Include(r => r.Object)
+                    .ThenInclude(o => o.Status)
+                .Include(r => r.ResStatus)
+                .Include(r => r.User)
+                .Where(r => r.User != null && r.User.PhoneNumber.Contains(phoneNumber))
+                .OrderByDescending(r => r.Id)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
     }
 }

@@ -1,6 +1,7 @@
 ﻿using ASPNETCore.Application.DTO;
 using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ASPNETCore.Application.Services
 {
@@ -11,16 +12,18 @@ namespace ASPNETCore.Application.Services
     {
         private readonly IContractRepository _contractRepository;
         private readonly IReservationRepository _resRepository;
+        private readonly ILogger<ContractServices> _logger; 
 
         /// <summary>
         /// Инициализирует новый экземпляр <see cref="ContractServices"/>
         /// </summary>
         /// <param name="contractRepository">Репозиторий для работы с договорами</param>
         /// <param name="resRepository">Репозиторий для работы с бронированиями</param>
-        public ContractServices(IContractRepository contractRepository, IReservationRepository resRepository)
+        public ContractServices(IContractRepository contractRepository, IReservationRepository resRepository, ILogger<ContractServices> logger)
         {
             _contractRepository = contractRepository;
             _resRepository = resRepository;
+            _logger = logger;
         }
 
         /// <summary>
@@ -52,7 +55,7 @@ namespace ASPNETCore.Application.Services
             var contract = await _contractRepository.GetByIdAsync(id);
             if (contract == null)
             {
-                Console.WriteLine($"Контракт с ID {id} не найден в БД!");
+                _logger.LogWarning($"Контракт с ID {id} не найден в БД!");
                 return null;
             }
 
@@ -100,9 +103,15 @@ namespace ASPNETCore.Application.Services
         {
             var reser = await _resRepository.GetByIdAsync(contractDto.ReservationId);
             if (reser == null)
+            {
+                _logger.LogError($"Reservation с ID {contractDto.ReservationId} не найдена.");
                 throw new ArgumentException($"Reservation с ID {contractDto.ReservationId} не найдена.");
+            }
             if (reser.ResStatusId != 1)
+            {
+                _logger.LogError($"Договор по брони {reser.Id} уже заключен");
                 throw new ArgumentException($"Договор по брони уже заключен");
+            }
 
             int addPrice = reser.Object.Price / 10;
             if (addPrice > 70000) addPrice = 70000;
@@ -136,6 +145,8 @@ namespace ASPNETCore.Application.Services
 
                 await _contractRepository.UpdateAsync(contract);
             }
+            else
+                _logger.LogError($"Договор не найден (id {contractDto.Id})");
         }
 
         /// <summary>

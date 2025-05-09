@@ -11,5 +11,6 @@ namespace ASPNETCore.Domain.Interfaces
         Task AddAsync(Reservation reservation);
         Task UpdateAsync(Reservation reservation);
         Task DeleteAsync(int id);
+        Task<IEnumerable<Reservation>> SearchByPhoneNumberAsync(string phoneNumber);
     }
 }

@@ -21,6 +21,7 @@ namespace ProjectManagement.Api.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AccountController> _logger;
 
         /// <summary>
         /// Инициализирует новый экземпляр <see cref="AccountController"/>
@@ -28,11 +29,13 @@ namespace ProjectManagement.Api.Controllers
         /// <param name="userManager">Менеджер пользователей</param>
         /// <param name="signInManager">Менеджер аутентификации</param>
         /// <param name="configuration">Конфигурация приложения</param>
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration)
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager,
+            IConfiguration configuration, ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _logger = logger;
         }
 
         /// <summary>
@@ -45,6 +48,7 @@ namespace ProjectManagement.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterModel model)
         {
+            _logger.LogInformation($"Новый пользователь регистрируется в системе. Логин: {model.UserName} ");
             if (!ModelState.IsValid)
             {
                 Console.WriteLine("ModelState невалидна:");
@@ -63,6 +67,7 @@ namespace ProjectManagement.Api.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
+                _logger.LogInformation($"Новый пользователь зарегистрирован. Логин: {model.UserName} ");
                 await _userManager.AddToRoleAsync(user, "User");
                 return Ok(new { Message = "User registered successfully" });
             }
@@ -80,6 +85,7 @@ namespace ProjectManagement.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginModel model)
         {
+            _logger.LogInformation($"Пользователь с логином {model.UserName} пытается войти в систему");
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, isPersistent: false, lockoutOnFailure: false);
             if (result.Succeeded)
@@ -88,6 +94,7 @@ namespace ProjectManagement.Api.Controllers
                 var token = GenerateJwtToken(user);
                 var roles = await _userManager.GetRolesAsync(user);
 
+                _logger.LogInformation($"{model.UserName} вошел в систему.");
                 return Ok(new
                 {
                     token = token,
@@ -108,6 +115,8 @@ namespace ProjectManagement.Api.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} выходит из системы");
             await _signInManager.SignOutAsync();
             return Ok(new { Message = "User logged out successfully" });
         }
@@ -121,6 +130,7 @@ namespace ProjectManagement.Api.Controllers
         [HttpGet("validate")]
         public async Task<IActionResult> ValidateToken()
         {
+            _logger.LogInformation($"Вызывается метод валидации токена");
             User usr = await _userManager.GetUserAsync(HttpContext.User);
             if (usr == null)
             {
@@ -141,19 +151,14 @@ namespace ProjectManagement.Api.Controllers
         [HttpGet("profile")]
         public async Task<IActionResult> GetCurrentUser()
         {
-            //var user = await _userManager.Users
-            //    .Include(u => u.Reservation)
-            //        .ThenInclude(r => r.Object)
-            //    .Include(u => u.Reservation)
-            //        .ThenInclude(r => r.ResStatus)
-            //    .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
-
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает информацию о текущем пользователе в системе");
             var user = await _userManager.Users
-    .Include(u => u.Reservation)
-        .ThenInclude(r => r.Object)
-    .Include(u => u.Reservation)
-        .ThenInclude(r => r.ResStatus)
-    .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
+            .Include(u => u.Reservation)
+                .ThenInclude(r => r.Object)
+            .Include(u => u.Reservation)
+                .ThenInclude(r => r.ResStatus)
+            .FirstOrDefaultAsync(u => u.Id == _userManager.GetUserId(HttpContext.User));
 
             if (user != null)
             {
@@ -211,6 +216,8 @@ namespace ProjectManagement.Api.Controllers
         [HttpPut("editprofile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileModel model)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} редактирует свой профиль");
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -228,6 +235,7 @@ namespace ProjectManagement.Api.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
+                _logger.LogInformation($"{currUser} успешно внес изменения в свой профиль");
                 return Ok(new
                 {
                     message = "Профиль успешно обновлен",
@@ -247,6 +255,8 @@ namespace ProjectManagement.Api.Controllers
         [HttpGet("all-users")]
         public async Task<IActionResult> GetAllUsers()
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает информацию о всех пользователях системы");
             var users = new List<object>();
             var allUsers = await _userManager.Users.AsNoTracking().ToListAsync();
 
@@ -273,6 +283,7 @@ namespace ProjectManagement.Api.Controllers
         /// <returns>Сгенерированный JWT-токен</returns>
         private string GenerateJwtToken(User user)
         {
+            _logger.LogInformation($"Для пользователя {user.UserName} происходит генерация токена");
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),

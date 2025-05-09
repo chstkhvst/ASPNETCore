@@ -16,24 +16,35 @@ namespace WebAPI.Controllers
     public class ReservationController : ControllerBase
     {
         private readonly ReservationServices _reservationService;
+        private readonly ILogger<ReservationController> _logger;
 
         /// <summary>
         /// Инициализирует новый экземпляр <see cref="ReservationController"/>
         /// </summary>
         /// <param name="reservationService">Сервис для работы с бронированиями</param>
-        public ReservationController(ReservationServices reservationService)
+        public ReservationController(ReservationServices reservationService, ILogger<ReservationController> logger)
         {
             _reservationService = reservationService;
+            _logger = logger;
         }
 
         /// <summary>
         /// Получает список всех бронирований
         /// </summary>
         /// <returns>Коллекция бронирований</returns>
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReservationDTO>>> GetReservations()
+        public async Task<ActionResult<IEnumerable<ReservationDTO>>> GetReservations([FromQuery] string? phoneNumber)
         {
-            var reservations = await _reservationService.GetAllAsync();
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            if (string.IsNullOrEmpty(phoneNumber)) 
+                _logger.LogInformation($"{currUser} получает список всех бронирований");
+            else
+                _logger.LogInformation($"{currUser} получает список бронирований с номером {phoneNumber}");
+            var reservations = string.IsNullOrEmpty(phoneNumber)
+                ? await _reservationService.GetAllAsync()
+                : await _reservationService.SearchByPhoneNumberAsync(phoneNumber);
+
             return Ok(reservations);
         }
 
@@ -47,6 +58,8 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ReservationDTO>> GetReservation(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} получает бронирование с id {id}");
             var reservation = await _reservationService.GetByIdAsync(id);
             if (reservation == null) return NotFound();
             return Ok(reservation);
@@ -61,6 +74,8 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ReservationDTO>> CreateReservation(CreateReservationDTO reservationDto)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} создает новый объект");
             await _reservationService.AddAsync(reservationDto);
             return CreatedAtAction(nameof(GetReservation), new { id = reservationDto.Id }, reservationDto);
         }
@@ -76,9 +91,9 @@ namespace WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ReservationDTO>> UpdateReservation(int id, CreateReservationDTO reservationDto)
         {
-            Console.WriteLine("Зашли в функцию");
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} обновляет объект");
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            Console.WriteLine("Зашли в проверку");
             if (id != reservationDto.Id) return BadRequest();
             await _reservationService.UpdateAsync(reservationDto);
             return CreatedAtAction(nameof(GetReservation), new { id = reservationDto.Id }, reservationDto);
@@ -94,6 +109,8 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteReservation(int id)
         {
+            var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
+            _logger.LogInformation($"{currUser} удаляет бронь с id {id}");
             try
             {
                 await _reservationService.DeleteAsync(id);
@@ -101,6 +118,8 @@ namespace WebAPI.Controllers
             }
             catch (ApplicationException ex)
             {
+                _logger.LogError($"Ошибка при удалении брони {ex.Message}");
+                
                 return Conflict(new { message = ex.Message });
             }
         }

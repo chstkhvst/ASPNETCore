@@ -4,6 +4,7 @@ using ASPNETCore.Domain.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using ASPNETCore.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace ASPNETCore.Application.Services
 {
@@ -14,16 +15,19 @@ namespace ASPNETCore.Application.Services
     {
         private readonly IREObjectRepository _reObjectRepository;
         private readonly IImageRepository _imageRepository;
+        private readonly ILogger<REObjectServices> _logger;
+
 
         /// <summary>
         /// Инициализирует новый экземпляр <see cref="REObjectServices"/>
         /// </summary>
         /// <param name="reObjectRepository">Репозиторий объектов недвижимости</param>
         /// <param name="imageRepository">Репозиторий изображений</param>
-        public REObjectServices(IREObjectRepository reObjectRepository, IImageRepository imageRepository)
+        public REObjectServices(IREObjectRepository reObjectRepository, IImageRepository imageRepository, ILogger<REObjectServices> logger)
         {
             _reObjectRepository = reObjectRepository;
             _imageRepository = imageRepository;
+            _logger = logger;
         }
 
         /// <summary>
@@ -75,7 +79,7 @@ namespace ASPNETCore.Application.Services
             var obj = await _reObjectRepository.GetByIdAsync(id);
             if (obj == null)
             {
-                Console.WriteLine($"Объект с ID {id} не найден в БД!");
+                _logger.LogWarning($"Объект с ID {id} не найден в БД!");
                 return null;
             }
 
@@ -213,7 +217,10 @@ namespace ASPNETCore.Application.Services
         {
             var obj = await _reObjectRepository.GetByIdAsync(o.Id);
             if (obj == null)
+            {
+                _logger.LogWarning($"Ошибка обновления: объект с id {o.Id} не найден");
                 return;
+            }
 
             obj.Rooms = o.Rooms;
             obj.Floors = o.Floors;

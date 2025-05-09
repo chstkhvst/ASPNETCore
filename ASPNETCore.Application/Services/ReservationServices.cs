@@ -44,6 +44,7 @@ namespace ASPNETCore.Application.Services
             });
         }
 
+
         /// <summary>
         /// Получает бронирование по идентификатору
         /// </summary>
@@ -148,5 +149,29 @@ namespace ASPNETCore.Application.Services
                 throw new ApplicationException($"Ошибка при удалении брони: {ex.Message}", ex);
             }
         }
+
+        /// <summary>
+        /// Ищет бронирования по номеру телефона пользователя
+        /// </summary>
+        /// <param name="phoneNumber">Номер телефона для поиска</param>
+        /// <returns>Коллекция DTO бронирований, отфильтрованных по номеру телефона</returns>
+        public async Task<IEnumerable<ReservationDTO>> SearchByPhoneNumberAsync(string phoneNumber)
+        {
+            var reservations = await _reservationRepository.SearchByPhoneNumberAsync(phoneNumber);
+
+            return reservations.Select(r => new ReservationDTO
+            {
+                Id = r.Id,
+                ObjectId = r.ObjectId,
+                UserId = r.UserId,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate,
+                ResStatusId = r.ResStatusId,
+                Object = r.Object,
+                ResStatus = r.ResStatus,
+                User = r.User
+            });
+        }
+
     }
 }
