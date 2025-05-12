@@ -2,6 +2,7 @@
 using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.Contracts;
 
 namespace ASPNETCore.Application.Services
 {
@@ -85,7 +86,9 @@ namespace ASPNETCore.Application.Services
                 SignDate = c.SignDate,
                 ReservationId = c.ReservationId,
                 UserId = c.UserId,
-                Total = c.Total
+                Total = c.Total,
+                Reservation = c.Reservation,
+                User = c.User
             });
         }
 
@@ -116,7 +119,7 @@ namespace ASPNETCore.Application.Services
             int addPrice = reser.Object.Price / 10;
             if (addPrice > 70000) addPrice = 70000;
 
-            var contract = new Contract
+            var contract = new Domain.Entities.Contract
             {
                 ReservationId = contractDto.ReservationId,
                 UserId = contractDto.UserId,

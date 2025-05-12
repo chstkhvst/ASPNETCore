@@ -86,6 +86,9 @@ namespace ASPNETCore.Infrastructure.Repositories
             return await _context.Contracts
                 .Where(c => c.SignDate == signDate)
                 .Include(c => c.Reservation)
+                    .ThenInclude(r => r.Object)
+                .Include(c => c.Reservation)
+                    .ThenInclude(r => r.User)
                 .Include(c => c.User)
                 .ToListAsync();
         }

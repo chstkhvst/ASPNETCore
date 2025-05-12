@@ -285,16 +285,17 @@ namespace ProjectManagement.Api.Controllers
         {
             _logger.LogInformation($"Для пользователя {user.UserName} происходит генерация токена");
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+            { //саб - субъект, jti - идентификатор токена
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName), //клейм - пара ключ-значение хранящая инфу о пользователе
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
             var roles = _userManager.GetRolesAsync(user).Result;
             claims.AddRange(roles.Select(role => new Claim(ClaimsIdentity.DefaultRoleClaimType, role)));
-
+            // ключ для подписи. симметричный (один для подписи и проверки) 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            //подпись токена(параметры,алгоритм)
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["Jwt:ExpireDays"]));
 
@@ -306,7 +307,7 @@ namespace ProjectManagement.Api.Controllers
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);//токен в виде строки
         }
     }
 }

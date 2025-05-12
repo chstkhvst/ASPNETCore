@@ -4,6 +4,7 @@ using ASPNETCore.Domain.Entities;
 using ASPNETCore.Domain.Interfaces;
 using Moq;
 using Xunit;
+using Microsoft.Extensions.Logging;
 
 namespace ASPNETCore.Tests.ApplicationTests
 {
@@ -12,12 +13,13 @@ namespace ASPNETCore.Tests.ApplicationTests
         private readonly Mock<IContractRepository> _contractRepoMock;
         private readonly Mock<IReservationRepository> _reservationRepoMock;
         private readonly ContractServices _service;
+        private readonly Mock<ILogger<ContractServices>> _loggermock = new();
 
         public ContractServiceTest()
         {
             _contractRepoMock = new Mock<IContractRepository>();
             _reservationRepoMock = new Mock<IReservationRepository>();
-            _service = new ContractServices(_contractRepoMock.Object, _reservationRepoMock.Object);
+            _service = new ContractServices(_contractRepoMock.Object, _reservationRepoMock.Object, _loggermock.Object);
         }
 
         [Fact]

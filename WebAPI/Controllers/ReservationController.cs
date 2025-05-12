@@ -75,7 +75,7 @@ namespace WebAPI.Controllers
         public async Task<ActionResult<ReservationDTO>> CreateReservation(CreateReservationDTO reservationDto)
         {
             var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
-            _logger.LogInformation($"{currUser} создает новый объект");
+            _logger.LogInformation($"{currUser} создает новую бронь");
             await _reservationService.AddAsync(reservationDto);
             return CreatedAtAction(nameof(GetReservation), new { id = reservationDto.Id }, reservationDto);
         }
@@ -92,7 +92,7 @@ namespace WebAPI.Controllers
         public async Task<ActionResult<ReservationDTO>> UpdateReservation(int id, CreateReservationDTO reservationDto)
         {
             var currUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Неавторизованный пользователь";
-            _logger.LogInformation($"{currUser} обновляет объект");
+            _logger.LogInformation($"{currUser} обновляет бронь с id {id}");
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (id != reservationDto.Id) return BadRequest();
             await _reservationService.UpdateAsync(reservationDto);

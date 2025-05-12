@@ -92,21 +92,6 @@ namespace ASPNETCore.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Удаляет бронирование по указанному идентификатору
-        /// </summary>
-        /// <param name="id">Идентификатор бронирования</param>
-        /// <returns>Асинхронная задача</returns>
-        public async Task DeleteAsync(int id)
-        {
-            var reservation = await _context.Reservations.FindAsync(id);
-            if (reservation != null)
-            {
-                _context.Reservations.Remove(reservation);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        /// <summary>
         /// Ищет бронирования по номеру телефона пользователя
         /// </summary>
         /// <param name="phoneNumber">Номер телефона</param>
@@ -128,5 +113,19 @@ namespace ASPNETCore.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Удаляет бронирование по указанному идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор бронирования</param>
+        /// <returns>Асинхронная задача</returns>
+        public async Task DeleteAsync(int id)
+        {
+            var reservation = await _context.Reservations.FindAsync(id);
+            if (reservation != null)
+            {
+                _context.Reservations.Remove(reservation);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

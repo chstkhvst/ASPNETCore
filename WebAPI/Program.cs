@@ -21,14 +21,13 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddDefaultTokenProviders();
 
 
-builder.Services.AddScoped<IREObjectRepository, REObjectRepository>();
+builder.Services.AddScoped<IREObjectRepository, REObjectRepository>(); //–егистрирует сервис с областью видимости "Scoped" (один экземпл€р на HTTP-запрос)
 builder.Services.AddScoped<IContractRepository, ContractRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddScoped<CatalogService>();
 
-// –егистраци€ репозитори€ объектов.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -44,18 +43,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SigningKey"]))
         };
-
-        //// ќбработка событи€ 401
-        //options.Events = new JwtBearerEvents
-        //{
-        //    OnChallenge = async context =>
-        //    {
-        //        context.HandleResponse();
-        //        context.Response.StatusCode = 401;
-        //        context.Response.ContentType = "application/json";
-        //        await context.Response.WriteAsync("{\"error\":\"Unauthorized access\"}");
-        //    }
-        //};
     });
 
 builder.Services.AddAuthorization(options =>
@@ -75,20 +62,9 @@ builder.Services.AddScoped<ReservationServices>();
 
 builder.Services.AddControllers();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddEndpointsApiExplorer(); //добавл€ет метаданные дл€ Swagger
+builder.Services.AddSwaggerGen(); // настраивает генерацию OpenAPI-документации.
 
-
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowAll",
-//        policy =>
-//        {
-//            policy.WithOrigins("http://localhost:3000") // ”казываем фронт
-//                  .AllowAnyHeader()
-//                  .AllowAnyMethod();
-//        });
-//});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -118,7 +94,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection(); //ѕеренаправл€ет HTTP-запросы на HTTPS
 
 app.UseStaticFiles();
 
@@ -127,9 +103,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseCors("AllowAll");
-using (var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateScope()) //инициализаци€ бд. скоп - временный контейнер, управл€ющий временем жизни сервисов
 {
-    var services = scope.ServiceProvider;
+    var services = scope.ServiceProvider; //доступ к сервисам
     var context = services.GetRequiredService<ApplicationDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
